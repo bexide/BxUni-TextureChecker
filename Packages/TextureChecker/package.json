@@ -1,0 +1,14 @@
+{
+  "name": "jp.bexide.lib.texturechecker",
+  "displayName": "Texture Checker",
+  "description": "Texture Check Utility",
+  "version": "1.0.0",
+  "unity": "2020.3",
+  "license": "",
+  "author": "BeXide, Inc.",
+  "category": "BX-lib",
+  "dependencies": {
+    "com.unity.editorcoroutines": "1.0.0",
+    "com.unity.mathematics": "1.2.1"
+  }
+}
