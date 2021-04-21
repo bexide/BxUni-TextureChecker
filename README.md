@@ -1,29 +1,26 @@
-# README #
+# Texture Checker
 
-This README would normally document whatever steps are necessary to get your application up and running.
+テクスチャ設定を検査するエディタ拡張
 
-### What is this repository for? ###
+## 使用方法
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* UnityEditorメニュー → BeXide → Texture Compression Check
+* UnityEditorメニュー → BeXide → Texture Size Quality Check
 
-### How do I get set up? ###
+### Texture Compression Check
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+#### 結果の見方
 
-### Contribution guidelines ###
+##### 独立したテクスチャが圧縮されていません
 
-* Writing tests
-* Code review
-* Other guidelines
+- アトラスに登録されていないテクスチャです。アトラスに登録するのを忘れていないでしょうか。もしくはインポート設定に誤りがある可能性があります。非圧縮が意図したものであるか確認してください。
 
-### Who do I talk to? ###
+##### 独立したテクスチャの大きさがPOTではありません。
 
-* Repo owner or admin
-* Other community or team contact
+- アトラスに登録されていないテクスチャです。アトラスに登録するのを忘れていないでしょうか。もしくはテクスチャサイズに誤りがあります（256とか512とかの、2の累乗ではない）。
+
+##### アトラスに登録されたテクスチャが圧縮されています。
+
+- アトラスに登録するテクスチャのインポート設定が間違っています。非圧縮にしてください。
+
+ランタイムでUnityが使うものではないテクスチャ（アプリアイコンとかエディタ用リソース）にも警告が出る場合がありますが、これは無視して大丈夫です。
