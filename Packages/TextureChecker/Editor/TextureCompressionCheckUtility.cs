@@ -31,6 +31,12 @@ namespace BX
             public string m_text;
         }
 
+        private readonly string[] k_platformStrings =
+        {
+            "Default", "Standalone", "Web", "iPhone", "Android", "WebGL", "Windows Store Apps",
+            "PS4", "XboxOne", "Nintendo Switch", "tvOS",
+        };
+
         public DefaultAsset TargetFolder { get; set; }
 
         private HashSet<string> AtlasedTextureGUIDs { get; set; }
@@ -339,32 +345,42 @@ namespace BX
                     continue;
                 }
 
+                // テクスチャサイズ
                 var widthAndHeight = GetWidthAndHeight(textureImporter);
                 bool isPOT = Mathf.IsPowerOfTwo(widthAndHeight.x) && Mathf.IsPowerOfTwo(widthAndHeight.y);
 
-                var settings = textureImporter.GetDefaultPlatformTextureSettings();
-                bool isRaw = IsRawFormat(settings.format);
-
-                var iPhoneSettings = textureImporter.GetPlatformTextureSettings("iPhone");
-                var androidSettings = textureImporter.GetPlatformTextureSettings("Android");
-
-                bool isIPhoneOverride = (iPhoneSettings != null && iPhoneSettings.overridden);
-                bool isAndroidOverride = (androidSettings != null && androidSettings.overridden);
+                // 全プラットフォーム別のインポート設定を取得
+                var settings = k_platformStrings.Select(platformString =>
+                        platformString == "Default"
+                            ? textureImporter.GetDefaultPlatformTextureSettings()
+                            : textureImporter.GetPlatformTextureSettings(platformString))
+                    .ToArray();
+                settings[0].overridden = true;
+                Debug.Assert(settings[0].overridden);
 
                 if (AtlasedTextureGUIDs.Contains(guid))
                 {
-                    bool isIPhoneCompressed = isIPhoneOverride && !IsRawFormat(iPhoneSettings.format);
-                    bool isAndroidCompressed = isAndroidOverride && !IsRawFormat(androidSettings.format);
-                    if (!isRaw || isIPhoneCompressed || isAndroidCompressed)
+                    if (settings.Any(s => s.overridden
+                                          && !IsRawFormat(s.format, s.textureCompression)))
                     {
-                        AddAssetInformationWarning(path, "アトラスに登録されたテクスチャが圧縮されています。");
+                        var compressionMessage = new List<string>();
+                        for (int j = 0; j < k_platformStrings.Length; j++)
+                        {
+                            var s = settings[j];
+                            if (s.overridden && !IsRawFormat(s.format, s.textureCompression))
+                            {
+                                compressionMessage.Add($"{k_platformStrings[j]}={s.format}");
+                            }
+                        }
+
+                        AddAssetInformationWarning(path,
+                            $"アトラスに登録されたテクスチャが圧縮されています。({string.Join(",", compressionMessage)})");
                     }
                 }
                 else
                 {
-                    bool isIPhoneRaw = isIPhoneOverride && IsRawFormat(iPhoneSettings.format);
-                    bool isAndroidRaw = isAndroidOverride && IsRawFormat(androidSettings.format);
-                    if (isRaw || isIPhoneRaw || isAndroidRaw)
+                    if (settings.Any(s => s.overridden
+                                          && IsRawFormat(s.format, s.textureCompression)))
                     {
                         AddAssetInformationWarning(path, "独立したテクスチャが圧縮されていません。");
                     }
@@ -396,14 +412,15 @@ namespace BX
             return new Vector2Int((int) args[0], (int) args[1]);
         }
 
-        private bool IsRawFormat(TextureImporterFormat format)
+        private bool IsRawFormat(TextureImporterFormat format, TextureImporterCompression compression)
         {
             return
                 format == TextureImporterFormat.ARGB32 ||
                 format == TextureImporterFormat.RGBA32 ||
                 format == TextureImporterFormat.RGB24 ||
                 format == TextureImporterFormat.Alpha8 ||
-                format == TextureImporterFormat.R8;
+                format == TextureImporterFormat.R8 ||
+                (format == TextureImporterFormat.Automatic && compression == TextureImporterCompression.Uncompressed);
         }
 
         private IEnumerator DumpSprite(Sprite sprite)
