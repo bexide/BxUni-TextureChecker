@@ -19,55 +19,59 @@ namespace BX
     {
         private enum InformationType
         {
-            Info, Warning, Error,
+            Info,
+            Warning,
+            Error,
         }
 
         private struct InformationEntry
         {
             public InformationType m_type;
-            public UnityEngine.Object m_object;
+            public string m_path;
             public string m_text;
         }
 
         public DefaultAsset TargetFolder { get; set; }
 
         private HashSet<string> AtlasedTextureGUIDs { get; set; }
-        private Texture2D CurrentAsset { get; set; }
+        private string CurrentPath { get; set; }
 
         private List<InformationEntry> Informations { get; set; }
         private bool IsCompleted { get; set; } = false;
 
-        private void AddInformation(UnityEngine.Object obj, InformationType type, string message)
+        private void AddInformation(string path, InformationType type, string message)
         {
-            Informations.Add(new InformationEntry { m_object = obj, m_type = type, m_text = message, });
+            Informations.Add(new InformationEntry {m_path = path, m_type = type, m_text = message,});
         }
+
         private void AddInformationLog(string message)
         {
-            AddInformation(CurrentAsset, InformationType.Info, message);
+            AddInformation(CurrentPath, InformationType.Info, message);
         }
+
         private void AddInformationWarning(string message)
         {
-            AddInformation(CurrentAsset, InformationType.Warning, message);
+            AddInformation(CurrentPath, InformationType.Warning, message);
         }
+
         private void AddInformationError(string message)
         {
-            AddInformation(CurrentAsset, InformationType.Error, message);
+            AddInformation(CurrentPath, InformationType.Error, message);
         }
 
         private void AddAssetInformationWarning(string path, string message)
         {
-            CurrentAsset = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (CurrentAsset == null)
-            { Debug.LogError($"cannot load asset at [{path}]"); }
-            else
-            { AddInformationWarning(message); }
+            CurrentPath = path;
+            AddInformationWarning(message);
         }
 
 
         [MenuItem("BeXide/Texture Compression Check")]
         private static void Create()
         {
-            var window = GetWindow<TextureCompressionCheckUtility>(utility: true, title: "Texture Compression Checker", focus: true);
+            var window =
+                GetWindow<TextureCompressionCheckUtility>(utility: true, title: "Texture Compression Checker",
+                    focus: true);
             window.Initialize();
         }
 
@@ -75,7 +79,8 @@ namespace BX
         {
             if (TargetFolder == null)
             {
-                TargetFolder = AssetDatabase.LoadAssetAtPath("Assets/Application", typeof(DefaultAsset)) as DefaultAsset;
+                TargetFolder =
+                    AssetDatabase.LoadAssetAtPath("Assets/Application", typeof(DefaultAsset)) as DefaultAsset;
             }
 
             m_errorIconSmall = EditorGUIUtility.Load("icons/console.erroricon.sml.png") as Texture2D;
@@ -121,6 +126,9 @@ namespace BX
 
         private Vector2 m_informationScrollPosition;
 
+        private int m_viewIndex = 0;
+        private const int k_pageViews = 100;
+
         /// <summary>
         /// ウィンドウ表示
         /// </summary>
@@ -128,10 +136,11 @@ namespace BX
         {
             EditorGUILayout.LabelField(
                 "これはテクスチャアセットについて，圧縮状態をチェックするツールです。",
-                new GUIStyle(GUI.skin.label) { wordWrap = true, });
+                new GUIStyle(GUI.skin.label) {wordWrap = true,});
             EditorGUILayout.Space();
 
-            var newTarget = EditorGUILayout.ObjectField("対象フォルダ", TargetFolder, typeof(DefaultAsset), allowSceneObjects: false);
+            var newTarget =
+                EditorGUILayout.ObjectField("対象フォルダ", TargetFolder, typeof(DefaultAsset), allowSceneObjects: false);
             TargetFolder = newTarget as DefaultAsset;
 
             if (Informations == null)
@@ -151,41 +160,63 @@ namespace BX
             {
                 Clear();
             }
+
             EditorGUI.EndDisabledGroup();
 
             // 情報ウィンドウ
-            if (Informations != null)
+            if (Informations == null || !IsCompleted)
             {
-                if (Informations.Any())
-                {
-                    m_informationScrollPosition = EditorGUILayout.BeginScrollView(
-                    m_informationScrollPosition, false, false);
-
-                    bool even = false;
-                    foreach (var info in Informations)
-                    {
-                        var icon =
-                            info.m_type == InformationType.Info ? m_infoIconSmall :
-                            info.m_type == InformationType.Warning ? m_warningIconSmall :
-                            m_errorIconSmall;
-
-                        var logStyle = even ? m_logStyleOdd : m_logStyleEven;
-                        even = !even;
-
-                        EditorGUILayout.BeginHorizontal();
-                        EditorGUILayout.LabelField(new GUIContent(icon), GUILayout.MaxWidth(32f));
-                        EditorGUILayout.ObjectField(info.m_object, info.m_object.GetType(), false);
-                        EditorGUILayout.LabelField(info.m_text);
-                        EditorGUILayout.EndHorizontal();
-                    }
-
-                    EditorGUILayout.EndScrollView();
-                }
-                else if (IsCompleted)
-                {
-                    EditorGUILayout.HelpBox("見つかりませんでした。", MessageType.Warning);
-                }
+                return;
             }
+
+            if (Informations.Count == 0)
+            {
+                EditorGUILayout.HelpBox("見つかりませんでした。", MessageType.Warning);
+                return;
+            }
+
+            m_informationScrollPosition = EditorGUILayout.BeginScrollView(
+                m_informationScrollPosition, false, false);
+
+            if (m_viewIndex > 0 &&
+                GUILayout.Button("前のページ", GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.5f)))
+            {
+                m_viewIndex -= k_pageViews;
+            }
+
+            bool even = false;
+            for (int i = m_viewIndex; i < Math.Min(m_viewIndex + k_pageViews, Informations.Count); i++)
+            {
+                var info = Informations[i];
+                var icon =
+                    info.m_type == InformationType.Info ? m_infoIconSmall :
+                    info.m_type == InformationType.Warning ? m_warningIconSmall :
+                    m_errorIconSmall;
+
+                var logStyle = even ? m_logStyleOdd : m_logStyleEven;
+                even = !even;
+
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(new GUIContent(icon), GUILayout.MaxWidth(32f));
+                if (GUILayout.Button(info.m_path, EditorStyles.objectField,
+                    GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.4f)))
+                {
+                    var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(info.m_path);
+                    EditorGUIUtility.PingObject(obj);
+                }
+
+                EditorGUILayout.LabelField(info.m_text);
+                EditorGUILayout.EndHorizontal();
+            }
+
+            if (m_viewIndex + k_pageViews < Informations.Count &&
+                GUILayout.Button("次のページ", GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.5f)))
+            {
+                m_viewIndex += k_pageViews;
+                m_informationScrollPosition = Vector2.zero;
+            }
+
+            EditorGUILayout.EndScrollView();
         }
 
         private void Clear()
@@ -210,7 +241,7 @@ namespace BX
 
             // SpriteAtlas 情報を収集
             string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
-            string[] guids = AssetDatabase.FindAssets("t:SpriteAtlas", new string[] { targetPath });
+            string[] guids = AssetDatabase.FindAssets("t:SpriteAtlas", new[] {targetPath});
             if (guids.Length <= 0)
             {
                 yield break;
@@ -238,14 +269,16 @@ namespace BX
                         yield return ReadSpriteAtlas(spriteAtlas);
                     }
                 }
+
                 // プログレスバー
                 if (EditorUtility.DisplayCancelableProgressBar("read SpriteAtlas",
-                    $"{i + 1}/{guidsLength}", (float)(i + 1) / guidsLength))
+                    $"{i + 1}/{guidsLength}", (float) (i + 1) / guidsLength))
                 {
                     // キャンセルされた
                     break;
                 }
             }
+
             EditorUtility.ClearProgressBar();
         }
 
@@ -261,7 +294,7 @@ namespace BX
             if (sizeProp != null && sizeProp.propertyType == SerializedPropertyType.ArraySize)
             {
                 int size = sizeProp.intValue;
-                for (int i=0; i<size; i++)
+                for (int i = 0; i < size; i++)
                 {
                     var dataProp = serializedObject.FindProperty($"m_PackedSprites.Array.data[{i}]");
                     if (dataProp != null)
@@ -273,6 +306,7 @@ namespace BX
                 }
 
             }
+
             yield break;
         }
 
@@ -280,7 +314,7 @@ namespace BX
         {
             // テクスチャアセットを列挙
             string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
-            string[] guids = AssetDatabase.FindAssets("t:Texture2D", new string[] { targetPath });
+            string[] guids = AssetDatabase.FindAssets("t:Texture2D", new[] {targetPath});
             if (guids.Length <= 0)
             {
                 yield break;
@@ -339,25 +373,27 @@ namespace BX
                         AddAssetInformationWarning(path, "独立したテクスチャの大きさがPOTではありません。");
                     }
                 }
+
                 // プログレスバー
                 if (EditorUtility.DisplayCancelableProgressBar("集計中",
-                    $"{i + 1}/{guidsLength}", (float)(i + 1) / guidsLength))
+                    $"{i + 1}/{guidsLength}", (float) (i + 1) / guidsLength))
                 {
                     // キャンセルされた
                     break;
                 }
             }
+
             EditorUtility.ClearProgressBar();
         }
 
         private Vector2Int GetWidthAndHeight(TextureImporter importer)
         {
-            object[] args = new object[2] { 0, 0 };
+            object[] args = new object[2] {0, 0};
             var methodInfo = typeof(TextureImporter).GetMethod("GetWidthAndHeight",
                 BindingFlags.NonPublic | BindingFlags.Instance);
             methodInfo.Invoke(importer, args);
 
-            return new Vector2Int((int)args[0], (int)args[1]);
+            return new Vector2Int((int) args[0], (int) args[1]);
         }
 
         private bool IsRawFormat(TextureImporterFormat format)
@@ -365,7 +401,9 @@ namespace BX
             return
                 format == TextureImporterFormat.ARGB32 ||
                 format == TextureImporterFormat.RGBA32 ||
-                format == TextureImporterFormat.RGB24;
+                format == TextureImporterFormat.RGB24 ||
+                format == TextureImporterFormat.Alpha8 ||
+                format == TextureImporterFormat.R8;
         }
 
         private IEnumerator DumpSprite(Sprite sprite)
@@ -377,8 +415,7 @@ namespace BX
                 do
                 {
                     yield return DumpSerializedProperty(iter);
-                }
-                while (iter.Next(false));
+                } while (iter.Next(false));
             }
         }
 
