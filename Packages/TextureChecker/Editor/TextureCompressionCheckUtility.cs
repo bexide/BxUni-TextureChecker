@@ -347,7 +347,9 @@ namespace BX
 
                 // テクスチャサイズ
                 var widthAndHeight = GetWidthAndHeight(textureImporter);
-                bool isPOT = Mathf.IsPowerOfTwo(widthAndHeight.x) && Mathf.IsPowerOfTwo(widthAndHeight.y);
+                // サイズはPOT、もしくはPOTに丸められる設定か
+                bool isPOT = (Mathf.IsPowerOfTwo(widthAndHeight.x) && Mathf.IsPowerOfTwo(widthAndHeight.y)) ||
+                             (textureImporter.npotScale != TextureImporterNPOTScale.None);
 
                 // 全プラットフォーム別のインポート設定を取得
                 var settings = k_platformStrings.Select(platformString =>
