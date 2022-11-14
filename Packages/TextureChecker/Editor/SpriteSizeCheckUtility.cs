@@ -423,6 +423,16 @@ namespace BX
                 EditorSceneManager.OpenScene(path);
                 CurrentAssetPath = path;
                 yield return CheckHierarchy();
+
+                // プログレスバー
+                if (EditorUtility.DisplayCancelableProgressBar(
+                        "シーンを集計中",
+                        $"{i + 1}/{guidsLength}",
+                        (float)(i + 1) / guidsLength))
+                {
+                    // キャンセルされた
+                    break;
+                }
             }
         }
 
