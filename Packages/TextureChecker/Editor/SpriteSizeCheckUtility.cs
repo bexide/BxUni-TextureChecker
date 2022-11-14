@@ -14,6 +14,8 @@ using UnityEngine.U2D;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using Unity.EditorCoroutines.Editor;
+using UnityEditor.SceneManagement;
+using UnityEngine.UI;
 
 namespace BX
 {
@@ -341,19 +343,31 @@ namespace BX
         {
             Informations = new List<InformationEntry>();
 
-            yield return CheckUISpriteSize();
+            switch (m_mode)
+            {
+            case 0: // prefab
+                yield return CheckPrefabs();
+                break;
+            
+            case 1: // scene
+                yield return CheckScenes();
+                break;
+            
+            case 2: // hierarchy
+                CurrentAssetPath = "";
+                yield return CheckHierarchy();
+                break;
+            }
 
             IsCompleted = true;
         }
 
-        private IEnumerator CheckUISpriteSize()
+        private IEnumerator CheckPrefabs()
         {
             // Prefabを列挙
-            string   targetPath = AssetDatabase.GetAssetPath(TargetFolder);
-            if (string.IsNullOrEmpty(targetPath))
-            {
-                targetPath = "Assets";
-            }
+            string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
+            if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
+
             string[] prefabGuids = AssetDatabase.FindAssets("t:prefab", new[] { targetPath });
             if (prefabGuids.Length <= 0) { yield break; }
 
@@ -361,7 +375,7 @@ namespace BX
             for (int i = 0; i < guidsLength; i++)
             {
                 string guid = prefabGuids[i];
-                Debug.Log($"[{guid}]");
+                //Debug.Log($"[{guid}]");
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 if (string.IsNullOrEmpty(path))
                 {
@@ -385,6 +399,49 @@ namespace BX
             EditorUtility.ClearProgressBar();
         }
 
+        private IEnumerator CheckScenes()
+        {
+            string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
+            if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
+
+            string[] sceneGuids = AssetDatabase.FindAssets("t:scene", new[] { targetPath });
+            if (sceneGuids.Length <= 0) { yield break; }
+
+            int guidsLength = sceneGuids.Length;
+            for (int i = 0; i < guidsLength; i++)
+            {
+                string guid = sceneGuids[i];
+                //Debug.Log($"[{guid}]");
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (string.IsNullOrEmpty(path))
+                {
+                    Debug.LogError($" cannot get path from GUID [{guid}]");
+                    continue;
+                }
+                Debug.Log($"Scene path[{path}]");
+
+                EditorSceneManager.OpenScene(path);
+                CurrentAssetPath = path;
+                yield return CheckHierarchy();
+            }
+        }
+
+        private IEnumerator CheckHierarchy()
+        {
+            var gameObjects = Resources.FindObjectsOfTypeAll(typeof(GameObject))
+                .Where(obj => AssetDatabase.GetAssetOrScenePath(obj).Contains(".unity"))
+                .OfType<GameObject>()
+                .ToList();
+
+            foreach (var go in gameObjects)
+            {
+                if (go.TryGetComponent<Image>(out var image))
+                {
+                    yield return CheckObject(image);
+                }
+            }
+        }
+
         private IEnumerator CheckAssetAtPath(string path)
         {
             var assetType = AssetDatabase.GetMainAssetTypeAtPath(path);
@@ -399,11 +456,11 @@ namespace BX
             foreach (var obj in assets)
             {
                 if (obj == null) { continue; }
-                yield return CheckAsset(obj);
+                yield return CheckObject(obj);
             }
         }
 
-        private IEnumerator CheckAsset(UnityEngine.Object obj)
+        private IEnumerator CheckObject(UnityEngine.Object obj)
         {
             Debug.Log($"Object [{obj.name}] Type=[{obj.GetType()}]");
             CurrentObjectPath = obj.name;
@@ -414,14 +471,14 @@ namespace BX
             while (property.Next(true)) { yield return DumpSerializedProperty(property); }
             yield break;
 #endif
-            if (obj is UnityEngine.UI.Image image)
+            if (obj is Image image)
             {
                 CheckImage(image);
             }
             yield break;
         }
 
-        private void CheckImage(UnityEngine.UI.Image image)
+        private void CheckImage(Image image)
         {
             var spriteSize = image.sprite.rect.size;
             var rectSize   = (image.gameObject.transform as RectTransform).sizeDelta;
