@@ -434,6 +434,8 @@ namespace BX
                     break;
                 }
             }
+
+            EditorUtility.ClearProgressBar();
         }
 
         private IEnumerator CheckHierarchy()
