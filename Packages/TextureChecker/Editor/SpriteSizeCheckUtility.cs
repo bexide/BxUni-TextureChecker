@@ -467,8 +467,7 @@ namespace BX
             var assets = AssetDatabase.LoadAllAssetsAtPath(path);
             foreach (var obj in assets)
             {
-                if (obj == null) { continue; }
-                yield return CheckObject(obj);
+                if (obj is Image image) { yield return CheckObject(image); }
             }
         }
 
