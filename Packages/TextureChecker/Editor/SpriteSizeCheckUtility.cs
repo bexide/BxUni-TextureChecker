@@ -490,14 +490,22 @@ namespace BX
 
         private void CheckImage(Image image)
         {
-            var spriteSize = image.sprite.rect.size;
+            var sprite = image.sprite;
+            if (sprite == null)
+            {
+                AddInformationError("ImageにSpriteが設定されていません");
+                return;
+            }
+
+            var spriteSize = sprite.rect.size;
             var rectSize   = (image.gameObject.transform as RectTransform).sizeDelta;
-            
+
             //Debug.Log($"[{image.name}]:sprite=[{image.sprite.name}] spriteSize={spriteSize}, rectSize={rectSize}");
 
-            if (spriteSize != rectSize)
+            if ((image.type == Image.Type.Simple || image.type == Image.Type.Filled) && 
+                spriteSize != rectSize)
             {
-                AddInformationWarning("ImageサイズがSpriteサイズと一致しません");
+                AddInformationWarning("RectサイズがSpriteサイズと一致しません");
             }
         }
 
