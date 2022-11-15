@@ -472,7 +472,7 @@ namespace BX
 
         private IEnumerator CheckObject(UnityEngine.Object obj)
         {
-            Debug.Log($"Object [{obj.name}] Type=[{obj.GetType()}]");
+            //Debug.Log($"Object [{obj.name}] Type=[{obj.GetType()}]");
             CurrentObjectPath = obj.name;
 #if false
             var serializedObject = new SerializedObject(obj);
@@ -493,7 +493,7 @@ namespace BX
             var spriteSize = image.sprite.rect.size;
             var rectSize   = (image.gameObject.transform as RectTransform).sizeDelta;
             
-            Debug.Log($"[{image.name}]:sprite=[{image.sprite.name}] spriteSize={spriteSize}, rectSize={rectSize}");
+            //Debug.Log($"[{image.name}]:sprite=[{image.sprite.name}] spriteSize={spriteSize}, rectSize={rectSize}");
 
             if (spriteSize != rectSize)
             {
