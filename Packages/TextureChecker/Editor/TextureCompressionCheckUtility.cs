@@ -1,5 +1,6 @@
-// BeXide,Inc.
+// 2020-01-21 BeXide,Inc.
 // by Y.Hayashi
+// original from bx70beta
 
 using System;
 using System.Reflection;
