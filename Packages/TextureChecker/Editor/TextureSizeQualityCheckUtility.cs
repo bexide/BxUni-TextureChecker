@@ -1,3 +1,6 @@
+// BeXide,Inc.
+// by Y.Hayashi
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +12,9 @@ using Unity.Mathematics;
 
 namespace BX.TextureChecker
 {
-    public class TextureSizeQualityCheckUtility : EditorWindow
+    public class TextureSizeQualityCheckUtility : TextureCheckerBase
     {
-        static readonly string DefaultPath = "Assets/Application";
-
-        static readonly string HPFShaderName = "Unlit/Highpass3x3";
+        static readonly string s_hpfShaderName = "Unlit/Highpass3x3";
 
         private enum InformationType
         {
@@ -26,8 +27,6 @@ namespace BX.TextureChecker
             public Object m_object;
             public string m_text;
         }
-
-        public DefaultAsset TargetFolder { get; set; }
 
         public float ResultThreshold { get; set; } = 0.2f;
 
@@ -75,47 +74,13 @@ namespace BX.TextureChecker
             window.Initialize();
         }
 
-        private void Initialize()
+        protected override void Initialize()
         {
-            if (TargetFolder == null)
-            {
-                TargetFolder = AssetDatabase.LoadAssetAtPath(DefaultPath, typeof(DefaultAsset)) as DefaultAsset;
-            }
+            base.Initialize();
 
-            HighPassShader = Shader.Find(HPFShaderName);
+            HighPassShader = Shader.Find(s_hpfShaderName);
             Debug.Assert(HighPassShader != null);
             HighPassMaterial = new Material(HighPassShader);
-
-            m_errorIconSmall = EditorGUIUtility.Load("icons/console.erroricon.sml.png") as Texture2D;
-            m_warningIconSmall = EditorGUIUtility.Load("icons/console.warnicon.sml.png") as Texture2D;
-            m_infoIconSmall = EditorGUIUtility.Load("icons/console.infoicon.sml.png") as Texture2D;
-            var logStyle = new GUIStyle();
-
-            Texture2D logBgOdd;
-            Texture2D logBgEven;
-            Texture2D logBgSelected;
-
-            if (EditorGUIUtility.isProSkin)
-            {
-                logStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
-                logBgOdd = EditorGUIUtility.Load("builtin skins/darkskin/images/cn entrybackodd.png") as Texture2D;
-                logBgEven = EditorGUIUtility.Load("builtin skins/darkskin/images/cnentrybackeven.png") as Texture2D;
-                logBgSelected = EditorGUIUtility.Load("builtin skins/darkskin/images/menuitemhover.png") as Texture2D;
-            }
-            else
-            {
-                logStyle.normal.textColor = new Color(0.1f, 0.1f, 0.1f);
-                logBgOdd = EditorGUIUtility.Load("builtin skins/lightskin/images/cn entrybackodd.png") as Texture2D;
-                logBgEven = EditorGUIUtility.Load("builtin skins/lightskin/images/cnentrybackeven.png") as Texture2D;
-                logBgSelected = EditorGUIUtility.Load("builtin skins/lightskin/images/menuitemhover.png") as Texture2D;
-            }
-
-            m_logStyleOdd = new GUIStyle(logStyle);
-            m_logStyleEven = new GUIStyle(logStyle);
-            m_logStyleSelected = new GUIStyle(logStyle);
-            m_logStyleOdd.normal.background = logBgOdd;
-            m_logStyleEven.normal.background = logBgEven;
-            m_logStyleSelected.normal.background = logBgSelected;
         }
 
         // GUI表示内部情報
@@ -153,6 +118,7 @@ namespace BX.TextureChecker
                     MessageType.Info);
             }
 
+            EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("チェック", GUILayout.MaxWidth(120)))
             {
                 EditorCoroutineUtility.StartCoroutine(Execute(), this);
@@ -168,6 +134,8 @@ namespace BX.TextureChecker
             {
                 Save();
             }
+            EditorGUILayout.EndHorizontal();
+            
             EditorGUILayout.Space();
             int newIndex = EditorGUILayout.Popup("ソート", SortTypeIndex, SortTypeNames);
             if (newIndex != SortTypeIndex)
@@ -234,6 +202,8 @@ namespace BX.TextureChecker
         {
             // テクスチャアセットを列挙
             string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
+            if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
+
             string[] guids = AssetDatabase.FindAssets("t:Texture2D", new string[] { targetPath });
             if (guids.Length <= 0)
             {

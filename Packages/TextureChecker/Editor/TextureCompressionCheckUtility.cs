@@ -1,3 +1,6 @@
+// BeXide,Inc.
+// by Y.Hayashi
+
 using System;
 using System.Reflection;
 using System.Collections;
@@ -5,8 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 using UnityEngine;
-using UnityEngine.U2D;
-
 using UnityEditor;
 using Unity.EditorCoroutines.Editor;
 
@@ -15,15 +16,8 @@ namespace BX.TextureChecker
     /// <summary>
     /// テクスチャアセットの圧縮設定をチェックするツール
     /// </summary>
-    public class TextureCompressionCheckUtility : EditorWindow
+    public class TextureCompressionCheckUtility : TextureCheckerBase
     {
-        private enum InformationType
-        {
-            Info,
-            Warning,
-            Error,
-        }
-
         private struct InformationEntry
         {
             public InformationType m_type;
@@ -34,12 +28,9 @@ namespace BX.TextureChecker
         private readonly string[] k_platformStrings =
         {
             "Default", "Standalone", "Web", "iPhone", "Android", "WebGL", "Windows Store Apps",
-            "PS4", "XboxOne", "Nintendo Switch", "tvOS",
+            "PS4", "PS5", "XboxOne", "Nintendo Switch", "tvOS",
         };
 
-        public DefaultAsset TargetFolder { get; set; }
-
-        private HashSet<string> AtlasedTextureGUIDs { get; set; }
         private string CurrentPath { get; set; }
 
         private List<InformationEntry> Informations { get; set; }
@@ -81,55 +72,6 @@ namespace BX.TextureChecker
             window.Initialize();
         }
 
-        private void Initialize()
-        {
-            if (TargetFolder == null)
-            {
-                TargetFolder =
-                    AssetDatabase.LoadAssetAtPath("Assets/Application", typeof(DefaultAsset)) as DefaultAsset;
-            }
-
-            m_errorIconSmall = EditorGUIUtility.Load("icons/console.erroricon.sml.png") as Texture2D;
-            m_warningIconSmall = EditorGUIUtility.Load("icons/console.warnicon.sml.png") as Texture2D;
-            m_infoIconSmall = EditorGUIUtility.Load("icons/console.infoicon.sml.png") as Texture2D;
-            var logStyle = new GUIStyle();
-
-            Texture2D logBgOdd;
-            Texture2D logBgEven;
-            Texture2D logBgSelected;
-
-            if (EditorGUIUtility.isProSkin)
-            {
-                logStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
-                logBgOdd = EditorGUIUtility.Load("builtin skins/darkskin/images/cn entrybackodd.png") as Texture2D;
-                logBgEven = EditorGUIUtility.Load("builtin skins/darkskin/images/cnentrybackeven.png") as Texture2D;
-                logBgSelected = EditorGUIUtility.Load("builtin skins/darkskin/images/menuitemhover.png") as Texture2D;
-            }
-            else
-            {
-                logStyle.normal.textColor = new Color(0.1f, 0.1f, 0.1f);
-                logBgOdd = EditorGUIUtility.Load("builtin skins/lightskin/images/cn entrybackodd.png") as Texture2D;
-                logBgEven = EditorGUIUtility.Load("builtin skins/lightskin/images/cnentrybackeven.png") as Texture2D;
-                logBgSelected = EditorGUIUtility.Load("builtin skins/lightskin/images/menuitemhover.png") as Texture2D;
-            }
-
-            m_logStyleOdd = new GUIStyle(logStyle);
-            m_logStyleEven = new GUIStyle(logStyle);
-            m_logStyleSelected = new GUIStyle(logStyle);
-            m_logStyleOdd.normal.background = logBgOdd;
-            m_logStyleEven.normal.background = logBgEven;
-            m_logStyleSelected.normal.background = logBgSelected;
-        }
-
-        // GUI表示内部情報
-        GUIStyle m_logStyleOdd;
-        GUIStyle m_logStyleEven;
-        GUIStyle m_logStyleSelected;
-        Texture2D m_icon;
-        Texture2D m_errorIconSmall;
-        Texture2D m_warningIconSmall;
-        Texture2D m_infoIconSmall;
-
         private Vector2 m_informationScrollPosition;
 
         private int m_viewIndex = 0;
@@ -156,6 +98,7 @@ namespace BX.TextureChecker
                     MessageType.Info);
             }
 
+            EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("チェック", GUILayout.MaxWidth(120)))
             {
                 EditorCoroutineUtility.StartCoroutine(Execute(), this);
@@ -166,6 +109,7 @@ namespace BX.TextureChecker
             {
                 Clear();
             }
+            EditorGUILayout.EndHorizontal();
 
             EditorGUI.EndDisabledGroup();
 
@@ -241,85 +185,12 @@ namespace BX.TextureChecker
             IsCompleted = true;
         }
 
-        private IEnumerator CollectSpriteAtlas()
-        {
-            AtlasedTextureGUIDs = new HashSet<string>();
-
-            // SpriteAtlas 情報を収集
-            string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
-            string[] guids = AssetDatabase.FindAssets("t:SpriteAtlas", new[] {targetPath});
-            if (guids.Length <= 0)
-            {
-                yield break;
-            }
-
-            int guidsLength = guids.Length;
-            for (int i = 0; i < guidsLength; i++)
-            {
-                string guid = guids[i];
-                //Debug.Log($"[{guid}]");
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (string.IsNullOrEmpty(path))
-                {
-                    Debug.LogError($" cannot get path from GUID [{guid}]");
-                }
-                else
-                {
-                    var spriteAtlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(path);
-                    if (spriteAtlas == null)
-                    {
-                        Debug.LogError($" cannot load from path [{path}]");
-                    }
-                    else
-                    {
-                        yield return ReadSpriteAtlas(spriteAtlas);
-                    }
-                }
-
-                // プログレスバー
-                if (EditorUtility.DisplayCancelableProgressBar("read SpriteAtlas",
-                    $"{i + 1}/{guidsLength}", (float) (i + 1) / guidsLength))
-                {
-                    // キャンセルされた
-                    break;
-                }
-            }
-
-            EditorUtility.ClearProgressBar();
-        }
-
-        /// <summary>
-        /// SpriteAtlasに含まれるSpriteのGUIDを収集する
-        /// </summary>
-        /// <param name="spriteAtlas"></param>
-        /// <returns></returns>
-        private IEnumerator ReadSpriteAtlas(SpriteAtlas spriteAtlas)
-        {
-            var serializedObject = new SerializedObject(spriteAtlas);
-            var sizeProp = serializedObject.FindProperty("m_PackedSprites.Array.size");
-            if (sizeProp != null && sizeProp.propertyType == SerializedPropertyType.ArraySize)
-            {
-                int size = sizeProp.intValue;
-                for (int i = 0; i < size; i++)
-                {
-                    var dataProp = serializedObject.FindProperty($"m_PackedSprites.Array.data[{i}]");
-                    if (dataProp != null)
-                    {
-                        string spritePath = AssetDatabase.GetAssetPath(dataProp.objectReferenceValue);
-                        string spriteGUID = AssetDatabase.AssetPathToGUID(spritePath);
-                        AtlasedTextureGUIDs.Add(spriteGUID);
-                    }
-                }
-
-            }
-
-            yield break;
-        }
-
         private IEnumerator CheckTexture2D()
         {
             // テクスチャアセットを列挙
             string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
+            if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
+
             string[] guids = AssetDatabase.FindAssets("t:Texture2D", new[] {targetPath});
             if (guids.Length <= 0)
             {

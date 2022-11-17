@@ -22,13 +22,8 @@ namespace BX.TextureChecker
     /// <summary>
     /// Imageのサイズがスプライトのサイズと一致しているかを検証する
     /// </summary>
-    public class SpriteSizeCheckUtility : EditorWindow
+    public class SpriteSizeCheckUtility : TextureCheckerBase
     {
-        private enum InformationType
-        {
-            Info, Warning, Error,
-        }
-
         private struct InformationEntry
         {
             public InformationType m_type;
@@ -37,13 +32,11 @@ namespace BX.TextureChecker
             public string          m_text;
         }
 
-        public DefaultAsset TargetFolder { get; set; }
-
         private string CurrentAssetPath  { get; set; }
         private string CurrentObjectPath { get; set; }
 
         private List<SpriteSizeCheckUtility.InformationEntry> Informations { get; set; }
-        private bool                     IsCompleted  { get; set; }
+        private bool                                          IsCompleted  { get; set; }
 
         private void AddInformation(
             string          assetPath,
@@ -68,7 +61,11 @@ namespace BX.TextureChecker
 
         private void AddInformationWarning(string message)
         {
-            AddInformation(CurrentAssetPath, CurrentObjectPath, InformationType.Warning, message);
+            AddInformation(
+                CurrentAssetPath,
+                CurrentObjectPath,
+                InformationType.Warning,
+                message);
         }
 
         private void AddInformationError(string message)
@@ -76,7 +73,10 @@ namespace BX.TextureChecker
             AddInformation(CurrentAssetPath, CurrentObjectPath, InformationType.Error, message);
         }
 
-        private void AddAssetInformationWarning(string assetPath, string objectPath, string message)
+        private void AddAssetInformationWarning(
+            string assetPath,
+            string objectPath,
+            string message)
         {
             CurrentAssetPath  = assetPath;
             CurrentObjectPath = objectPath;
@@ -95,54 +95,9 @@ namespace BX.TextureChecker
             window.Initialize();
         }
 
-        private void Initialize()
+        protected override void Initialize()
         {
-            if (TargetFolder == null)
-            {
-                TargetFolder =
-                    AssetDatabase.LoadAssetAtPath(
-                        "Assets/Application",
-                        typeof(DefaultAsset)) as DefaultAsset;
-            }
-
-            Texture2D LoadEditorRes(string path)
-            {
-                var icon = EditorGUIUtility.Load(path) as Texture2D;
-                return icon;
-            }
-
-            m_errorIconSmall   = LoadEditorRes("icons/console.erroricon.sml.png");
-            m_warningIconSmall = LoadEditorRes("icons/console.warnicon.sml.png");
-            m_infoIconSmall    = LoadEditorRes("icons/console.infoicon.sml.png");
-            var logStyle = new GUIStyle();
-
-            Texture2D logBgOdd;
-            Texture2D logBgEven;
-            Texture2D logBgSelected;
-
-            if (EditorGUIUtility.isProSkin)
-            {
-                logStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
-                logBgOdd = LoadEditorRes("builtin skins/darkskin/images/cn entrybackodd.png");
-                logBgEven = LoadEditorRes("builtin skins/darkskin/images/cnentrybackeven.png");
-                logBgSelected
-                    = LoadEditorRes("builtin skins/darkskin/images/menuitemhover.png");
-            }
-            else
-            {
-                logStyle.normal.textColor = new Color(0.1f, 0.1f, 0.1f);
-                logBgOdd = LoadEditorRes("builtin skins/lightskin/images/cn entrybackodd.png");
-                logBgEven = LoadEditorRes("builtin skins/lightskin/images/cnentrybackeven.png");
-                logBgSelected
-                    = LoadEditorRes("builtin skins/lightskin/images/menuitemhover.png");
-            }
-
-            m_logStyleOdd                        = new GUIStyle(logStyle);
-            m_logStyleEven                       = new GUIStyle(logStyle);
-            m_logStyleSelected                   = new GUIStyle(logStyle);
-            m_logStyleOdd.normal.background      = logBgOdd;
-            m_logStyleEven.normal.background     = logBgEven;
-            m_logStyleSelected.normal.background = logBgSelected;
+            base.Initialize();
 
             // マルチカラムヘッダ
             m_columns = new[]
@@ -180,15 +135,7 @@ namespace BX.TextureChecker
 
         // GUI表示内部情報
         MultiColumnHeader               m_columnHeader;
-        MultiColumnHeaderState.Column[] m_columns;        
-        
-        GUIStyle  m_logStyleOdd;
-        GUIStyle  m_logStyleEven;
-        GUIStyle  m_logStyleSelected;
-        Texture2D m_icon;
-        Texture2D m_errorIconSmall;
-        Texture2D m_warningIconSmall;
-        Texture2D m_infoIconSmall;
+        MultiColumnHeaderState.Column[] m_columns;
 
         private Vector2 m_informationScrollPosition;
 
@@ -227,7 +174,7 @@ namespace BX.TextureChecker
                 k_modeTexts.Length,
                 new GUIStyle(EditorStyles.radioButton));
             EditorGUILayout.EndHorizontal();
-            
+
             if (Informations == null)
             {
                 EditorGUILayout.HelpBox(
@@ -348,11 +295,11 @@ namespace BX.TextureChecker
             case 0: // prefab
                 yield return CheckPrefabs();
                 break;
-            
+
             case 1: // scene
                 yield return CheckScenes();
                 break;
-            
+
             case 2: // hierarchy
                 CurrentAssetPath = "";
                 yield return CheckHierarchy();
@@ -477,15 +424,12 @@ namespace BX.TextureChecker
             CurrentObjectPath = obj.name;
 #if false
             var serializedObject = new SerializedObject(obj);
-            var property         = serializedObject.GetIterator();
+            var property = serializedObject.GetIterator();
 
             while (property.Next(true)) { yield return DumpSerializedProperty(property); }
             yield break;
 #endif
-            if (obj is Image image)
-            {
-                CheckImage(image);
-            }
+            if (obj is Image image) { CheckImage(image); }
             yield break;
         }
 
@@ -503,11 +447,8 @@ namespace BX.TextureChecker
 
             //Debug.Log($"[{image.name}]:sprite=[{image.sprite.name}] spriteSize={spriteSize}, rectSize={rectSize}");
 
-            if ((image.type == Image.Type.Simple || image.type == Image.Type.Filled) && 
-                spriteSize != rectSize)
-            {
-                AddInformationWarning("RectサイズがSpriteサイズと一致しません");
-            }
+            if ((image.type == Image.Type.Simple || image.type == Image.Type.Filled) &&
+                spriteSize != rectSize) { AddInformationWarning("RectサイズがSpriteサイズと一致しません"); }
         }
     }
 }
