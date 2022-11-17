@@ -24,66 +24,6 @@ namespace BX.TextureChecker
     /// </summary>
     public class SpriteSizeCheckUtility : TextureCheckerBase
     {
-        private struct InformationEntry
-        {
-            public InformationType m_type;
-            public string          m_assetPath;
-            public string          m_objectPath;
-            public string          m_text;
-        }
-
-        private string CurrentAssetPath  { get; set; }
-        private string CurrentObjectPath { get; set; }
-
-        private List<SpriteSizeCheckUtility.InformationEntry> Informations { get; set; }
-        private bool                                          IsCompleted  { get; set; }
-
-        private void AddInformation(
-            string          assetPath,
-            string          objectPath,
-            InformationType type,
-            string          message)
-        {
-            Informations.Add(
-                new SpriteSizeCheckUtility.InformationEntry
-                {
-                    m_assetPath  = assetPath,
-                    m_objectPath = objectPath,
-                    m_type       = type,
-                    m_text       = message,
-                });
-        }
-
-        private void AddInformationLog(string message)
-        {
-            AddInformation(CurrentAssetPath, CurrentObjectPath, InformationType.Info, message);
-        }
-
-        private void AddInformationWarning(string message)
-        {
-            AddInformation(
-                CurrentAssetPath,
-                CurrentObjectPath,
-                InformationType.Warning,
-                message);
-        }
-
-        private void AddInformationError(string message)
-        {
-            AddInformation(CurrentAssetPath, CurrentObjectPath, InformationType.Error, message);
-        }
-
-        private void AddAssetInformationWarning(
-            string assetPath,
-            string objectPath,
-            string message)
-        {
-            CurrentAssetPath  = assetPath;
-            CurrentObjectPath = objectPath;
-            AddInformationWarning(message);
-        }
-
-
         [MenuItem("BeXide/UI Sprite Size Check")]
         private static void Create()
         {
@@ -98,50 +38,9 @@ namespace BX.TextureChecker
         protected override void Initialize()
         {
             base.Initialize();
-
-            // マルチカラムヘッダ
-            m_columns = new[]
-            {
-                new MultiColumnHeaderState.Column()
-                {
-                    width = 20,
-                },
-                new MultiColumnHeaderState.Column()
-                {
-                    headerContent       = new GUIContent("Asset Path"),
-                    width               = 200,
-                    autoResize          = true,
-                    headerTextAlignment = TextAlignment.Left
-                },
-                new MultiColumnHeaderState.Column()
-                {
-                    headerContent       = new GUIContent("Object"),
-                    width               = 100,
-                    autoResize          = true,
-                    headerTextAlignment = TextAlignment.Left
-                },
-                new MultiColumnHeaderState.Column()
-                {
-                    headerContent       = new GUIContent("Information"),
-                    width               = 200,
-                    autoResize          = true,
-                    headerTextAlignment = TextAlignment.Left
-                },
-            };
-            m_columnHeader
-                = new MultiColumnHeader(new MultiColumnHeaderState(m_columns)) { height = 25 };
-            m_columnHeader.ResizeToFit();
         }
 
         // GUI表示内部情報
-        MultiColumnHeader               m_columnHeader;
-        MultiColumnHeaderState.Column[] m_columns;
-
-        private Vector2 m_informationScrollPosition;
-
-        private       int m_viewIndex = 0;
-        private const int k_pageViews = 100;
-
         private int      m_mode;
         private string[] k_modeTexts = { "Prefab", "Scene", "Hierarchy" };
 
@@ -175,15 +74,12 @@ namespace BX.TextureChecker
                 new GUIStyle(EditorStyles.radioButton));
             EditorGUILayout.EndHorizontal();
 
-            if (Informations == null)
+            if (InformationList == null)
             {
                 EditorGUILayout.HelpBox(
                     "チェックを開始するには下のチェックボタンを押してください。",
                     MessageType.Info);
             }
-            else { DrawInformation(); }
-
-            GUILayout.FlexibleSpace();
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("チェック", GUILayout.MaxWidth(120)))
@@ -191,104 +87,17 @@ namespace BX.TextureChecker
                 EditorCoroutineUtility.StartCoroutine(Execute(), this);
             }
 
-            EditorGUI.BeginDisabledGroup(Informations == null);
+            EditorGUI.BeginDisabledGroup(InformationList == null);
             if (GUILayout.Button("クリア", GUILayout.MaxWidth(120))) { Clear(); }
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
-        }
 
-        private void DrawInformation()
-        {
-            // 情報ウィンドウ
-            if (Informations == null || !IsCompleted) { return; }
-
-            // カラムヘッダ
-            var headerRect = EditorGUILayout.GetControlRect();
-            headerRect.height = m_columnHeader.height;
-            float xScroll = 0;
-            m_columnHeader.OnGUI(headerRect, xScroll);
-
-            if (Informations.Count == 0)
-            {
-                EditorGUILayout.HelpBox("見つかりませんでした。", MessageType.Warning);
-                return;
-            }
-
-            m_informationScrollPosition = EditorGUILayout.BeginScrollView(
-                m_informationScrollPosition,
-                false,
-                false);
-
-            if (m_viewIndex > 0 &&
-                GUILayout.Button(
-                    "前のページ",
-                    GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.5f)))
-            {
-                m_viewIndex -= k_pageViews;
-            }
-
-            bool even = false;
-            for (int i = m_viewIndex;
-                 i < Math.Min(m_viewIndex + k_pageViews, Informations.Count);
-                 i++)
-            {
-                var info = Informations[i];
-                var icon =
-                    info.m_type == InformationType.Info    ? m_infoIconSmall :
-                    info.m_type == InformationType.Warning ? m_warningIconSmall :
-                                                             m_errorIconSmall;
-
-                var logStyle = even ? m_logStyleOdd : m_logStyleEven;
-                even = !even;
-
-                EditorGUILayout.BeginHorizontal();
-
-                EditorGUILayout.LabelField(
-                    new GUIContent(icon),
-                    GUILayout.Width(m_columnHeader.GetColumnRect(0).width));
-
-                if (GUILayout.Button(
-                        info.m_assetPath,
-                        EditorStyles.objectField,
-                        GUILayout.Width(m_columnHeader.GetColumnRect(1).width)))
-                {
-                    var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(
-                        info.m_assetPath);
-                    EditorGUIUtility.PingObject(obj);
-                }
-
-                EditorGUILayout.LabelField(
-                    info.m_objectPath,
-                    GUILayout.Width(m_columnHeader.GetColumnRect(2).width));
-
-                EditorGUILayout.LabelField(
-                    info.m_text,
-                    GUILayout.Width(m_columnHeader.GetColumnRect(3).width));
-
-                EditorGUILayout.EndHorizontal();
-            }
-
-            if (m_viewIndex + k_pageViews < Informations.Count &&
-                GUILayout.Button(
-                    "次のページ",
-                    GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.5f)))
-            {
-                m_viewIndex                 += k_pageViews;
-                m_informationScrollPosition =  Vector2.zero;
-            }
-
-            EditorGUILayout.EndScrollView();
-        }
-
-        private void Clear()
-        {
-            Informations = null;
-            IsCompleted  = false;
+            DrawInformation();
         }
 
         private IEnumerator Execute()
         {
-            Informations = new List<SpriteSizeCheckUtility.InformationEntry>();
+            InformationList = new List<InformationEntry>();
 
             switch (m_mode)
             {

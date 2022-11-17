@@ -19,50 +19,11 @@ namespace BX.TextureChecker
     /// </summary>
     public class TextureCompressionCheckUtility : TextureCheckerBase
     {
-        private struct InformationEntry
-        {
-            public InformationType m_type;
-            public string m_path;
-            public string m_text;
-        }
-
         private readonly string[] k_platformStrings =
         {
             "Default", "Standalone", "Web", "iPhone", "Android", "WebGL", "Windows Store Apps",
             "PS4", "PS5", "XboxOne", "Nintendo Switch", "tvOS",
         };
-
-        private string CurrentPath { get; set; }
-
-        private List<InformationEntry> Informations { get; set; }
-        private bool IsCompleted { get; set; } = false;
-
-        private void AddInformation(string path, InformationType type, string message)
-        {
-            Informations.Add(new InformationEntry {m_path = path, m_type = type, m_text = message,});
-        }
-
-        private void AddInformationLog(string message)
-        {
-            AddInformation(CurrentPath, InformationType.Info, message);
-        }
-
-        private void AddInformationWarning(string message)
-        {
-            AddInformation(CurrentPath, InformationType.Warning, message);
-        }
-
-        private void AddInformationError(string message)
-        {
-            AddInformation(CurrentPath, InformationType.Error, message);
-        }
-
-        private void AddAssetInformationWarning(string path, string message)
-        {
-            CurrentPath = path;
-            AddInformationWarning(message);
-        }
-
 
         [MenuItem("BeXide/Texture Compression Check")]
         private static void Create()
@@ -92,11 +53,16 @@ namespace BX.TextureChecker
                 EditorGUILayout.ObjectField("対象フォルダ", TargetFolder, typeof(DefaultAsset), allowSceneObjects: false);
             TargetFolder = newTarget as DefaultAsset;
 
-            if (Informations == null)
+            if (InformationList == null)
             {
                 EditorGUILayout.HelpBox(
                     "チェックを開始するには下のチェックボタンを押してください。",
                     MessageType.Info);
+            }
+            else
+            {
+                // 情報ウィンドウ
+                DrawInformation();
             }
 
             EditorGUILayout.BeginHorizontal();
@@ -105,7 +71,7 @@ namespace BX.TextureChecker
                 EditorCoroutineUtility.StartCoroutine(Execute(), this);
             }
 
-            EditorGUI.BeginDisabledGroup(Informations == null);
+            EditorGUI.BeginDisabledGroup(InformationList == null);
             if (GUILayout.Button("クリア", GUILayout.MaxWidth(120)))
             {
                 Clear();
@@ -113,72 +79,11 @@ namespace BX.TextureChecker
             EditorGUILayout.EndHorizontal();
 
             EditorGUI.EndDisabledGroup();
-
-            // 情報ウィンドウ
-            if (Informations == null || !IsCompleted)
-            {
-                return;
-            }
-
-            if (Informations.Count == 0)
-            {
-                EditorGUILayout.HelpBox("見つかりませんでした。", MessageType.Warning);
-                return;
-            }
-
-            m_informationScrollPosition = EditorGUILayout.BeginScrollView(
-                m_informationScrollPosition, false, false);
-
-            if (m_viewIndex > 0 &&
-                GUILayout.Button("前のページ", GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.5f)))
-            {
-                m_viewIndex -= k_pageViews;
-            }
-
-            bool even = false;
-            for (int i = m_viewIndex; i < Math.Min(m_viewIndex + k_pageViews, Informations.Count); i++)
-            {
-                var info = Informations[i];
-                var icon =
-                    info.m_type == InformationType.Info ? m_infoIconSmall :
-                    info.m_type == InformationType.Warning ? m_warningIconSmall :
-                    m_errorIconSmall;
-
-                var logStyle = even ? m_logStyleOdd : m_logStyleEven;
-                even = !even;
-
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(new GUIContent(icon), GUILayout.MaxWidth(32f));
-                if (GUILayout.Button(info.m_path, EditorStyles.objectField,
-                    GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.4f)))
-                {
-                    var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(info.m_path);
-                    EditorGUIUtility.PingObject(obj);
-                }
-
-                EditorGUILayout.LabelField(info.m_text);
-                EditorGUILayout.EndHorizontal();
-            }
-
-            if (m_viewIndex + k_pageViews < Informations.Count &&
-                GUILayout.Button("次のページ", GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.5f)))
-            {
-                m_viewIndex += k_pageViews;
-                m_informationScrollPosition = Vector2.zero;
-            }
-
-            EditorGUILayout.EndScrollView();
-        }
-
-        private void Clear()
-        {
-            Informations = null;
-            IsCompleted = false;
         }
 
         private IEnumerator Execute()
         {
-            Informations = new List<InformationEntry>();
+            InformationList = new List<InformationEntry>();
 
             yield return CollectSpriteAtlas();
             yield return CheckTexture2D();
@@ -209,6 +114,8 @@ namespace BX.TextureChecker
                     Debug.LogError($" cannot get path from GUID [{guid}]");
                     continue;
                 }
+
+                CurrentAssetPath = path;
 
                 var textureImporter = AssetImporter.GetAtPath(path) as TextureImporter;
                 if (textureImporter == null)
@@ -247,7 +154,7 @@ namespace BX.TextureChecker
                             }
                         }
 
-                        AddAssetInformationWarning(path,
+                        AddInformationWarning(
                             $"アトラスに登録されたテクスチャが圧縮されています。({string.Join(",", compressionMessage)})");
                     }
                 }
@@ -256,11 +163,11 @@ namespace BX.TextureChecker
                     if (settings.Any(s => s.overridden
                                           && IsRawFormat(s.format, s.textureCompression)))
                     {
-                        AddAssetInformationWarning(path, "独立したテクスチャが圧縮されていません。");
+                        AddInformationWarning("独立したテクスチャが圧縮されていません。");
                     }
                     else if (!isPOT)
                     {
-                        AddAssetInformationWarning(path, "独立したテクスチャの大きさがPOTではありません。");
+                        AddInformationWarning("独立したテクスチャの大きさがPOTではありません。");
                     }
                 }
 

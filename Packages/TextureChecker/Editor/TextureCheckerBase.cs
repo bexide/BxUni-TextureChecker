@@ -1,11 +1,13 @@
 ﻿// 2022-11-17 BeXide,Inc.
 // by Y.Hayashi
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.U2D;
+using UnityEditor.IMGUI.Controls;
 
 namespace BX.TextureChecker
 {
@@ -13,7 +15,7 @@ namespace BX.TextureChecker
     {
         protected static readonly string s_defaultPath = "Assets/Application";
 
-        public enum InformationType
+        protected enum InformationType
         {
             Info, Warning, Error,
         }
@@ -27,11 +29,169 @@ namespace BX.TextureChecker
         protected Texture2D m_warningIconSmall;
         protected Texture2D m_infoIconSmall;
 
+        MultiColumnHeader               m_columnHeader;
+        MultiColumnHeaderState.Column[] m_columns;
+
+        private Vector2 m_informationScrollPosition;
+
+        private       int m_viewIndex = 0;
+        private const int k_pageViews = 100;
+
         /// <summary>対象フォルダ</summary>
-        public DefaultAsset TargetFolder { get; set; }
+        protected DefaultAsset TargetFolder { get; set; }
 
         /// <summary>アトラスに登録されているテクスチャ一覧</summary>
         protected HashSet<string> AtlasedTextureGUIDs { get; set; }
+        
+        protected struct InformationEntry
+        {
+            public InformationType m_type;
+            public string          m_assetPath;
+            public string          m_objectPath;
+            public string          m_text;
+        }
+
+        //protected string CurrentAssetPath  { get; set; }
+        protected string CurrentAssetPath  { get; set; }
+        protected string CurrentObjectPath { get; set; }
+
+        protected List<InformationEntry> InformationList { get; set; }
+        protected bool                   IsCompleted     { get; set; }
+
+        private void AddInformation(
+            string          assetPath,
+            string          objectPath,
+            InformationType type,
+            string          message)
+        {
+            InformationList.Add(
+                new InformationEntry
+                {
+                    m_assetPath  = assetPath,
+                    m_objectPath = objectPath,
+                    m_type       = type,
+                    m_text       = message,
+                });
+        }
+
+        protected void AddInformationLog(string message)
+        {
+            AddInformation(
+                CurrentAssetPath,
+                CurrentObjectPath,
+                InformationType.Info,
+                message);
+        }
+
+        protected void AddInformationWarning(string message)
+        {
+            AddInformation(
+                CurrentAssetPath,
+                CurrentObjectPath,
+                InformationType.Warning,
+                message);
+        }
+
+        protected void AddInformationError(string message)
+        {
+            AddInformation(
+                CurrentAssetPath,
+                CurrentObjectPath,
+                InformationType.Error,
+                message);
+        }
+
+        /// <summary>
+        /// 情報の描画
+        /// </summary>
+        protected void DrawInformation()
+        {
+            // 情報ウィンドウ
+            if (InformationList == null || !IsCompleted) { return; }
+
+            // カラムヘッダ
+            var headerRect = EditorGUILayout.GetControlRect();
+            headerRect.height = m_columnHeader.height;
+            float xScroll = 0;
+            m_columnHeader.OnGUI(headerRect, xScroll);
+
+            if (InformationList.Count == 0)
+            {
+                EditorGUILayout.HelpBox("見つかりませんでした。", MessageType.Warning);
+                return;
+            }
+
+            m_informationScrollPosition = EditorGUILayout.BeginScrollView(
+                m_informationScrollPosition,
+                false,
+                false);
+
+            if (m_viewIndex > 0 &&
+                GUILayout.Button(
+                    "前のページ",
+                    GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.5f)))
+            {
+                m_viewIndex -= k_pageViews;
+            }
+
+            bool even = false;
+            for (int i = m_viewIndex;
+                 i < Math.Min(m_viewIndex + k_pageViews, InformationList.Count);
+                 i++)
+            {
+                var info = InformationList[i];
+                var icon =
+                    info.m_type == InformationType.Info    ? m_infoIconSmall :
+                    info.m_type == InformationType.Warning ? m_warningIconSmall :
+                                                             m_errorIconSmall;
+
+                var logStyle = even ? m_logStyleOdd : m_logStyleEven;
+                even = !even;
+
+                EditorGUILayout.BeginHorizontal();
+
+                EditorGUILayout.LabelField(
+                    new GUIContent(icon),
+                    GUILayout.Width(m_columnHeader.GetColumnRect(0).width));
+
+                if (GUILayout.Button(
+                        info.m_assetPath,
+                        EditorStyles.objectField,
+                        GUILayout.Width(m_columnHeader.GetColumnRect(1).width)))
+                {
+                    var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(
+                        info.m_assetPath);
+                    EditorGUIUtility.PingObject(obj);
+                }
+
+                EditorGUILayout.LabelField(
+                    info.m_objectPath,
+                    GUILayout.Width(m_columnHeader.GetColumnRect(2).width));
+
+                EditorGUILayout.LabelField(
+                    info.m_text,
+                    GUILayout.Width(m_columnHeader.GetColumnRect(3).width));
+
+                EditorGUILayout.EndHorizontal();
+            }
+
+            if (m_viewIndex + k_pageViews < InformationList.Count &&
+                GUILayout.Button(
+                    "次のページ",
+                    GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.5f)))
+            {
+                m_viewIndex                 += k_pageViews;
+                m_informationScrollPosition =  Vector2.zero;
+            }
+
+            EditorGUILayout.EndScrollView();
+        }
+
+        protected void Clear()
+        {
+            InformationList = null;
+            IsCompleted  = false;
+        }
 
         /// <summary>初期化</summary>
         protected virtual void Initialize()
@@ -84,6 +244,39 @@ namespace BX.TextureChecker
             m_logStyleOdd.normal.background      = logBgOdd;
             m_logStyleEven.normal.background     = logBgEven;
             m_logStyleSelected.normal.background = logBgSelected;
+
+            // マルチカラムヘッダ
+            m_columns = new[]
+            {
+                new MultiColumnHeaderState.Column()
+                {
+                    width = 20,
+                },
+                new MultiColumnHeaderState.Column()
+                {
+                    headerContent       = new GUIContent("Asset Path"),
+                    width               = 200,
+                    autoResize          = true,
+                    headerTextAlignment = TextAlignment.Left
+                },
+                new MultiColumnHeaderState.Column()
+                {
+                    headerContent       = new GUIContent("Object"),
+                    width               = 100,
+                    autoResize          = true,
+                    headerTextAlignment = TextAlignment.Left
+                },
+                new MultiColumnHeaderState.Column()
+                {
+                    headerContent       = new GUIContent("Information"),
+                    width               = 200,
+                    autoResize          = true,
+                    headerTextAlignment = TextAlignment.Left
+                },
+            };
+            m_columnHeader
+                = new MultiColumnHeader(new MultiColumnHeaderState(m_columns)) { height = 25 };
+            m_columnHeader.ResizeToFit();
         }
 
         protected IEnumerator CollectSpriteAtlas()

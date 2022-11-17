@@ -6,7 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.U2D;
 using UnityEditor;
 using Unity.EditorCoroutines.Editor;
 using Unity.Mathematics;
@@ -17,46 +16,12 @@ namespace BX.TextureChecker
     {
         static readonly string s_hpfShaderName = "Unlit/Highpass3x3";
 
-        private enum InformationType
-        {
-            Info, Warning, Error,
-        }
-
-        private struct InformationEntry
-        {
-            public InformationType m_type;
-            public Object m_object;
-            public string m_text;
-        }
-
         public float ResultThreshold { get; set; } = 0.2f;
 
         public int SizeThreshold { get; set; } = 32;
 
-        private Texture2D CurrentAsset { get; set; }
-
-        private List<InformationEntry> Informations { get; set; }
-        private bool IsCompleted { get; set; } = false;
         private int SortTypeIndex { get; set; }
         static readonly string[] SortTypeNames = {"ピーク値","ピクセル数","パス"};
-
-        private void AddInformation(Object obj, InformationType type, string message)
-        {
-            Informations.Add(new InformationEntry { m_object = obj, m_type = type, m_text = message, });
-        }
-        private void AddInformationLog(string message)
-        {
-            AddInformation(CurrentAsset, InformationType.Info, message);
-        }
-        private void AddInformationWarning(string message)
-        {
-            AddInformation(CurrentAsset, InformationType.Warning, message);
-        }
-        private void AddInformationError(string message)
-        {
-            AddInformation(CurrentAsset, InformationType.Error, message);
-        }
-
         private Shader HighPassShader { get; set; }
         private Material HighPassMaterial { get; set; }
 
@@ -84,17 +49,6 @@ namespace BX.TextureChecker
             HighPassMaterial = new Material(HighPassShader);
         }
 
-        // GUI表示内部情報
-        GUIStyle m_logStyleOdd;
-        GUIStyle m_logStyleEven;
-        GUIStyle m_logStyleSelected;
-        Texture2D m_icon;
-        Texture2D m_errorIconSmall;
-        Texture2D m_warningIconSmall;
-        Texture2D m_infoIconSmall;
-
-        private Vector2 m_informationScrollPosition;
-
         /// <summary>
         /// ウィンドウ表示
         /// </summary>
@@ -112,7 +66,7 @@ namespace BX.TextureChecker
 
             ResultThreshold = EditorGUILayout.Slider("結果しきい値", ResultThreshold, 0f, 5f);
 
-            if (Informations == null)
+            if (InformationList == null)
             {
                 EditorGUILayout.HelpBox(
                     "チェックを開始するには下のチェックボタンを押してください。",
@@ -125,7 +79,7 @@ namespace BX.TextureChecker
                 EditorCoroutineUtility.StartCoroutine(Execute(), this);
             }
 
-            EditorGUI.BeginDisabledGroup(Informations == null);
+            EditorGUI.BeginDisabledGroup(InformationList == null);
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("クリア", GUILayout.MaxWidth(120)))
             {
@@ -148,50 +102,19 @@ namespace BX.TextureChecker
             EditorGUI.EndDisabledGroup();
 
             // 情報ウィンドウ
-            if (Informations != null)
-            {
-                if (Informations.Any())
-                {
-                    m_informationScrollPosition = EditorGUILayout.BeginScrollView(
-                    m_informationScrollPosition, false, false);
-
-                    bool even = false;
-                    foreach (var info in Informations)
-                    {
-                        var icon =
-                            info.m_type == InformationType.Info ? m_infoIconSmall :
-                            info.m_type == InformationType.Warning ? m_warningIconSmall :
-                            m_errorIconSmall;
-
-                        var logStyle = even ? m_logStyleOdd : m_logStyleEven;
-                        even = !even;
-
-                        EditorGUILayout.BeginHorizontal();
-                        EditorGUILayout.LabelField(new GUIContent(icon), GUILayout.MaxWidth(32f));
-                        EditorGUILayout.ObjectField(info.m_object, info.m_object.GetType(), allowSceneObjects: false);
-                        EditorGUILayout.LabelField(info.m_text);
-                        EditorGUILayout.EndHorizontal();
-                    }
-
-                    EditorGUILayout.EndScrollView();
-                }
-                else if (IsCompleted)
-                {
-                    EditorGUILayout.HelpBox("見つかりませんでした。", MessageType.Warning);
-                }
-            }
+            DrawInformation();
         }
 
         private void Clear()
         {
-            Informations = null;
+            InformationList = null;
             CheckResults = null;
             IsCompleted = false;
         }
 
         private IEnumerator Execute()
         {
-            Informations = new List<InformationEntry>();
+            InformationList = new List<InformationEntry>();
             CheckResults = new List<CheckResultType>();
 
             yield return CheckTexture2D();
@@ -231,7 +154,7 @@ namespace BX.TextureChecker
                     }
                     else
                     {
-                        CurrentAsset = texture2d;
+                        CurrentAssetPath = path;
                         yield return CheckTexture2D(texture2d);
                     }
                 }
@@ -251,7 +174,7 @@ namespace BX.TextureChecker
 
         private void ChangeSortType()
         {
-            Informations.Clear();
+            InformationList.Clear();
             IOrderedEnumerable<CheckResultType> results;
             switch (SortTypeIndex)
             {
@@ -267,20 +190,21 @@ namespace BX.TextureChecker
             }
             foreach (var result in results)
             {
-                AddInformation(result.m_obj, InformationType.Warning, $"\te={result.m_error}");
+                CurrentAssetPath = AssetDatabase.GetAssetPath(result.m_obj); 
+                AddInformationWarning($"\te={result.m_error}");
             }
         }
 
         private void Save()
         {
-            string filePath = EditorUtility.SaveFilePanel("名前を付けて結果を保存", "", "TextureQualityCheckerResult", "txt");
-            using (var stream = new System.IO.StreamWriter(filePath))
-            {
-                foreach (var info in Informations)
-                {
-                    stream.WriteLine(AssetDatabase.GetAssetPath(info.m_object));
-                }
-            }
+            string filePath = EditorUtility.SaveFilePanel(
+                "名前を付けて結果を保存",
+                "",
+                "TextureQualityCheckerResult",
+                "txt");
+            using var stream = new System.IO.StreamWriter(filePath);
+
+            foreach (var info in InformationList) { stream.WriteLine(info.m_assetPath); }
         }
 
         /// <summary>
@@ -305,7 +229,7 @@ namespace BX.TextureChecker
             {
                 //AddInformationWarning($" e={e}");
                 long pixelCount = texture2d.width * texture2d.height;
-                CheckResults.Add(new CheckResultType { m_obj = CurrentAsset, m_error = m, m_pixelCount = pixelCount });
+                CheckResults.Add(new CheckResultType { m_obj = texture2d, m_error = m, m_pixelCount = pixelCount });
             }
 
             yield break;
