@@ -20,23 +20,27 @@ namespace BX.TextureChecker
 
         public int SizeThreshold { get; set; } = 32;
 
-        private int SortTypeIndex { get; set; }
-        static readonly string[] SortTypeNames = {"ピーク値","ピクセル数","パス"};
-        private Shader HighPassShader { get; set; }
-        private Material HighPassMaterial { get; set; }
+        private         int      SortTypeIndex { get; set; }
+        static readonly string[] SortTypeNames = { "ピーク値", "ピクセル数", "パス" };
+        private         Shader   HighPassShader   { get; set; }
+        private         Material HighPassMaterial { get; set; }
 
         private struct CheckResultType
         {
             public Object m_obj;
-            public float m_error;
-            public long m_pixelCount;
+            public float  m_error;
+            public long   m_pixelCount;
         }
+
         private List<CheckResultType> CheckResults { get; set; }
 
         [MenuItem("BeXide/Texture size quality check")]
         private static void Create()
         {
-            var window = GetWindow<TextureSizeQualityCheckUtility>(utility: true, title: "Texture Size Quality Checker", focus: true);
+            var window = GetWindow<TextureSizeQualityCheckUtility>(
+                utility: true,
+                title: "Texture Size Quality Checker",
+                focus: true);
             window.Initialize();
         }
 
@@ -56,10 +60,17 @@ namespace BX.TextureChecker
         {
             EditorGUILayout.LabelField(
                 "これはテクスチャの大きさが内容に対して大きすぎないかをチェックするツールです。",
-                new GUIStyle(GUI.skin.label) { wordWrap = true, });
+                new GUIStyle(GUI.skin.label)
+                {
+                    wordWrap = true,
+                });
             EditorGUILayout.Space();
 
-            var newTarget = EditorGUILayout.ObjectField("対象フォルダ", TargetFolder, typeof(DefaultAsset), allowSceneObjects: false);
+            var newTarget = EditorGUILayout.ObjectField(
+                "対象フォルダ",
+                TargetFolder,
+                typeof(DefaultAsset),
+                allowSceneObjects: false);
             TargetFolder = newTarget as DefaultAsset;
 
             SizeThreshold = EditorGUILayout.IntSlider("サイズしきい値", SizeThreshold, 0, 512);
@@ -81,16 +92,10 @@ namespace BX.TextureChecker
 
             EditorGUI.BeginDisabledGroup(InformationList == null);
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("クリア", GUILayout.MaxWidth(120)))
-            {
-                Clear();
-            }
-            if (GUILayout.Button("保存", GUILayout.MaxWidth(120)))
-            {
-                Save();
-            }
+            if (GUILayout.Button("クリア", GUILayout.MaxWidth(120))) { Clear(); }
+            if (GUILayout.Button("保存", GUILayout.MaxWidth(120))) { Save(); }
             EditorGUILayout.EndHorizontal();
-            
+
             EditorGUILayout.Space();
             int newIndex = EditorGUILayout.Popup("ソート", SortTypeIndex, SortTypeNames);
             if (newIndex != SortTypeIndex)
@@ -108,14 +113,14 @@ namespace BX.TextureChecker
         private void Clear()
         {
             InformationList = null;
-            CheckResults = null;
-            IsCompleted = false;
+            CheckResults    = null;
+            IsCompleted     = false;
         }
 
         private IEnumerator Execute()
         {
             InformationList = new List<InformationEntry>();
-            CheckResults = new List<CheckResultType>();
+            CheckResults    = new List<CheckResultType>();
 
             yield return CheckTexture2D();
 
@@ -128,11 +133,10 @@ namespace BX.TextureChecker
             string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
             if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
 
-            string[] guids = AssetDatabase.FindAssets("t:Texture2D", new string[] { targetPath });
-            if (guids.Length <= 0)
-            {
-                yield break;
-            }
+            string[] guids = AssetDatabase.FindAssets(
+                "t:Texture2D",
+                new string[] { targetPath });
+            if (guids.Length <= 0) { yield break; }
 
             int guidsLength = guids.Length;
             for (int i = 0; i < guidsLength; i++)
@@ -159,8 +163,10 @@ namespace BX.TextureChecker
                     }
                 }
                 // プログレスバー
-                if (EditorUtility.DisplayCancelableProgressBar("集計中",
-                    $"{i + 1}/{guidsLength}", (float)(i + 1) / guidsLength))
+                if (EditorUtility.DisplayCancelableProgressBar(
+                        "集計中",
+                        $"{i + 1}/{guidsLength}",
+                        (float)(i + 1) / guidsLength))
                 {
                     // キャンセルされた
                     break;
@@ -190,7 +196,7 @@ namespace BX.TextureChecker
             }
             foreach (var result in results)
             {
-                CurrentAssetPath = AssetDatabase.GetAssetPath(result.m_obj); 
+                CurrentAssetPath = AssetDatabase.GetAssetPath(result.m_obj);
                 AddInformationWarning($"\te={result.m_error}");
             }
         }
@@ -229,7 +235,13 @@ namespace BX.TextureChecker
             {
                 //AddInformationWarning($" e={e}");
                 long pixelCount = texture2d.width * texture2d.height;
-                CheckResults.Add(new CheckResultType { m_obj = texture2d, m_error = m, m_pixelCount = pixelCount });
+                CheckResults.Add(
+                    new CheckResultType
+                    {
+                        m_obj        = texture2d,
+                        m_error      = m,
+                        m_pixelCount = pixelCount
+                    });
             }
 
             yield break;

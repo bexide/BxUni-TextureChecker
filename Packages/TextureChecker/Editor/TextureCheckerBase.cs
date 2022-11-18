@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEditor.IMGUI.Controls;
+using UnityEditor.U2D;
 
 namespace BX.TextureChecker
 {
@@ -41,8 +42,8 @@ namespace BX.TextureChecker
         protected DefaultAsset TargetFolder { get; set; }
 
         /// <summary>アトラスに登録されているテクスチャ一覧</summary>
-        protected HashSet<string> AtlasedTextureGUIDs { get; set; }
-        
+        protected Dictionary<string, bool> AtlasedTextureMap { get; set; }
+
         protected struct InformationEntry
         {
             public InformationType m_type;
@@ -190,7 +191,7 @@ namespace BX.TextureChecker
         protected void Clear()
         {
             InformationList = null;
-            IsCompleted  = false;
+            IsCompleted     = false;
         }
 
         /// <summary>初期化</summary>
@@ -279,11 +280,14 @@ namespace BX.TextureChecker
             m_columnHeader.ResizeToFit();
         }
 
+        /// <summary>
+        /// SpriteAtlas 情報を収集
+        /// </summary>
+        /// <returns></returns>
         protected IEnumerator CollectSpriteAtlas()
         {
-            AtlasedTextureGUIDs = new HashSet<string>();
+            AtlasedTextureMap = new();
 
-            // SpriteAtlas 情報を収集
             string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
             if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
 
@@ -307,7 +311,11 @@ namespace BX.TextureChecker
                     {
                         Debug.LogError($" cannot load from path [{path}]");
                     }
-                    else { yield return ReadSpriteAtlas(spriteAtlas); }
+                    else
+                    {
+                        CurrentAssetPath = path;
+                        yield return ReadSpriteAtlas(spriteAtlas);
+                    }
                 }
 
                 // プログレスバー
@@ -331,27 +339,40 @@ namespace BX.TextureChecker
         /// <returns></returns>
         protected IEnumerator ReadSpriteAtlas(SpriteAtlas spriteAtlas)
         {
-            var serializedObject = new SerializedObject(spriteAtlas);
-            var sizeProp         = serializedObject.FindProperty("m_PackedSprites.Array.size");
-            if (sizeProp != null && sizeProp.propertyType == SerializedPropertyType.ArraySize)
+            var  packingSettings    = spriteAtlas.GetPackingSettings();
+            bool enableTightPacking = packingSettings.enableTightPacking;
+            if (!enableTightPacking)
             {
-                int size = sizeProp.intValue;
-                for (int i = 0; i < size; i++)
-                {
-                    var dataProp
-                        = serializedObject.FindProperty($"m_PackedSprites.Array.data[{i}]");
-                    if (dataProp != null)
-                    {
-                        string spritePath
-                            = AssetDatabase.GetAssetPath(dataProp.objectReferenceValue);
-                        string spriteGUID = AssetDatabase.AssetPathToGUID(spritePath);
-                        AtlasedTextureGUIDs.Add(spriteGUID);
-                    }
-                }
-
+                AddInformationWarning("TightPackingではないSpriteAtlasです");
             }
 
-            yield break;
+            var serializedObject = new SerializedObject(spriteAtlas);
+            var sizeProp         = serializedObject.FindProperty("m_PackedSprites.Array.size");
+            if (sizeProp == null || sizeProp.propertyType != SerializedPropertyType.ArraySize)
+            {
+                yield break;
+            }
+
+            int size = sizeProp.intValue;
+            for (int i = 0; i < size; i++)
+            {
+                var dataProp
+                    = serializedObject.FindProperty($"m_PackedSprites.Array.data[{i}]");
+                if (dataProp != null)
+                {
+                    string spritePath
+                        = AssetDatabase.GetAssetPath(dataProp.objectReferenceValue);
+                    string spriteGUID = AssetDatabase.AssetPathToGUID(spritePath);
+
+                    if (AtlasedTextureMap.TryGetValue(spriteGUID, out _))
+                    {
+                        CurrentObjectPath = spritePath;
+                        AddInformationError("SpriteのSpriteAtlasへの登録が重複しています");
+                        CurrentObjectPath = null;
+                    }
+                    else { AtlasedTextureMap[spriteGUID] = enableTightPacking; }
+                }
+            }
         }
     }
 }

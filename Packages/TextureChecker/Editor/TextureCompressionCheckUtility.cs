@@ -21,22 +21,34 @@ namespace BX.TextureChecker
     {
         private readonly string[] k_platformStrings =
         {
-            "Default", "Standalone", "Web", "iPhone", "Android", "WebGL", "Windows Store Apps",
-            "PS4", "PS5", "XboxOne", "Nintendo Switch", "tvOS",
+            "Default",
+            "Standalone",
+            "Web",
+            "iPhone",
+            "Android",
+            "WebGL",
+            "Windows Store Apps",
+            "PS4",
+            "PS5",
+            "XboxOne",
+            "Nintendo Switch",
+            "tvOS",
         };
 
         [MenuItem("BeXide/Texture Compression Check")]
         private static void Create()
         {
             var window =
-                GetWindow<TextureCompressionCheckUtility>(utility: true, title: "Texture Compression Checker",
+                GetWindow<TextureCompressionCheckUtility>(
+                    utility: true,
+                    title: "Texture Compression Checker",
                     focus: true);
             window.Initialize();
         }
 
         private Vector2 m_informationScrollPosition;
 
-        private int m_viewIndex = 0;
+        private       int m_viewIndex = 0;
         private const int k_pageViews = 100;
 
         /// <summary>
@@ -46,11 +58,18 @@ namespace BX.TextureChecker
         {
             EditorGUILayout.LabelField(
                 "これはテクスチャアセットについて，圧縮状態をチェックするツールです。",
-                new GUIStyle(GUI.skin.label) {wordWrap = true,});
+                new GUIStyle(GUI.skin.label)
+                {
+                    wordWrap = true,
+                });
             EditorGUILayout.Space();
 
             var newTarget =
-                EditorGUILayout.ObjectField("対象フォルダ", TargetFolder, typeof(DefaultAsset), allowSceneObjects: false);
+                EditorGUILayout.ObjectField(
+                    "対象フォルダ",
+                    TargetFolder,
+                    typeof(DefaultAsset),
+                    allowSceneObjects: false);
             TargetFolder = newTarget as DefaultAsset;
 
             if (InformationList == null)
@@ -72,10 +91,7 @@ namespace BX.TextureChecker
             }
 
             EditorGUI.BeginDisabledGroup(InformationList == null);
-            if (GUILayout.Button("クリア", GUILayout.MaxWidth(120)))
-            {
-                Clear();
-            }
+            if (GUILayout.Button("クリア", GUILayout.MaxWidth(120))) { Clear(); }
             EditorGUILayout.EndHorizontal();
 
             EditorGUI.EndDisabledGroup();
@@ -97,11 +113,8 @@ namespace BX.TextureChecker
             string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
             if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
 
-            string[] guids = AssetDatabase.FindAssets("t:Texture2D", new[] {targetPath});
-            if (guids.Length <= 0)
-            {
-                yield break;
-            }
+            string[] guids = AssetDatabase.FindAssets("t:Texture2D", new[] { targetPath });
+            if (guids.Length <= 0) { yield break; }
 
             int guidsLength = guids.Length;
             for (int i = 0; i < guidsLength; i++)
@@ -127,22 +140,25 @@ namespace BX.TextureChecker
                 // テクスチャサイズ
                 var widthAndHeight = GetWidthAndHeight(textureImporter);
                 // サイズはPOT、もしくはPOTに丸められる設定か
-                bool isPOT = (Mathf.IsPowerOfTwo(widthAndHeight.x) && Mathf.IsPowerOfTwo(widthAndHeight.y)) ||
+                bool isPOT = (Mathf.IsPowerOfTwo(widthAndHeight.x) &&
+                              Mathf.IsPowerOfTwo(widthAndHeight.y)) ||
                              (textureImporter.npotScale != TextureImporterNPOTScale.None);
 
                 // 全プラットフォーム別のインポート設定を取得
-                var settings = k_platformStrings.Select(platformString =>
-                        platformString == "Default"
-                            ? textureImporter.GetDefaultPlatformTextureSettings()
-                            : textureImporter.GetPlatformTextureSettings(platformString))
+                var settings = k_platformStrings.Select(
+                        platformString =>
+                            platformString == "Default"
+                                ? textureImporter.GetDefaultPlatformTextureSettings()
+                                : textureImporter.GetPlatformTextureSettings(platformString))
                     .ToArray();
                 settings[0].overridden = true;
                 Debug.Assert(settings[0].overridden);
 
-                if (AtlasedTextureGUIDs.Contains(guid))
+                if (AtlasedTextureMap.TryGetValue(guid, out bool enableTightPacking))
                 {
-                    if (settings.Any(s => s.overridden
-                                          && !IsRawFormat(s.format, s.textureCompression)))
+                    if (settings.Any(
+                            s => s.overridden
+                                 && !IsRawFormat(s.format, s.textureCompression)))
                     {
                         var compressionMessage = new List<string>();
                         for (int j = 0; j < k_platformStrings.Length; j++)
@@ -160,8 +176,9 @@ namespace BX.TextureChecker
                 }
                 else
                 {
-                    if (settings.Any(s => s.overridden
-                                          && IsRawFormat(s.format, s.textureCompression)))
+                    if (settings.Any(
+                            s => s.overridden
+                                 && IsRawFormat(s.format, s.textureCompression)))
                     {
                         AddInformationWarning("独立したテクスチャが圧縮されていません。");
                     }
@@ -172,8 +189,10 @@ namespace BX.TextureChecker
                 }
 
                 // プログレスバー
-                if (EditorUtility.DisplayCancelableProgressBar("集計中",
-                    $"{i + 1}/{guidsLength}", (float) (i + 1) / guidsLength))
+                if (EditorUtility.DisplayCancelableProgressBar(
+                        "集計中",
+                        $"{i + 1}/{guidsLength}",
+                        (float)(i + 1) / guidsLength))
                 {
                     // キャンセルされた
                     break;
@@ -185,15 +204,20 @@ namespace BX.TextureChecker
 
         private Vector2Int GetWidthAndHeight(TextureImporter importer)
         {
-            object[] args = new object[2] {0, 0};
-            var methodInfo = typeof(TextureImporter).GetMethod("GetWidthAndHeight",
+            var methodInfo = typeof(TextureImporter).GetMethod(
+                "GetWidthAndHeight",
                 BindingFlags.NonPublic | BindingFlags.Instance);
+            Debug.Assert(methodInfo != null);
+
+            object[] args = { 0, 0 };
             methodInfo.Invoke(importer, args);
 
-            return new Vector2Int((int) args[0], (int) args[1]);
+            return new Vector2Int((int)args[0], (int)args[1]);
         }
 
-        private bool IsRawFormat(TextureImporterFormat format, TextureImporterCompression compression)
+        private bool IsRawFormat(
+            TextureImporterFormat      format,
+            TextureImporterCompression compression)
         {
             return
                 format == TextureImporterFormat.ARGB32 ||
@@ -201,13 +225,14 @@ namespace BX.TextureChecker
                 format == TextureImporterFormat.RGB24 ||
                 format == TextureImporterFormat.Alpha8 ||
                 format == TextureImporterFormat.R8 ||
-                (format == TextureImporterFormat.Automatic && compression == TextureImporterCompression.Uncompressed);
+                (format == TextureImporterFormat.Automatic &&
+                 compression == TextureImporterCompression.Uncompressed);
         }
 
         private IEnumerator DumpSprite(Sprite sprite)
         {
             var serializedObject = new SerializedObject(sprite);
-            var iter = serializedObject.GetIterator();
+            var iter             = serializedObject.GetIterator();
             if (iter.Next(true))
             {
                 do

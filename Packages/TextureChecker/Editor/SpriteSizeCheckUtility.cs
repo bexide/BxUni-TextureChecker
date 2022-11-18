@@ -2,17 +2,12 @@
 // by Y.Hayashi
 
 using System;
-using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 
 using UnityEngine;
-using UnityEngine.U2D;
-
 using UnityEditor;
-using UnityEditor.IMGUI.Controls;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor.SceneManagement;
 using UnityEngine.UI;
@@ -33,11 +28,6 @@ namespace BX.TextureChecker
                     title: "UI Sprite Size Checker",
                     focus: true);
             window.Initialize();
-        }
-
-        protected override void Initialize()
-        {
-            base.Initialize();
         }
 
         // GUI表示内部情報

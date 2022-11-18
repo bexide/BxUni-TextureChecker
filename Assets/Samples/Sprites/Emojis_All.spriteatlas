@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Emojis_All
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 0
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: 5e817830356ef294e9bb751ac4fa4f68, type: 3}
+    - {fileID: 102900000, guid: ce93e99f7a829b04a84b1ea6ee8b0a9d, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: d0e4c740627a41948b4730bdde80159f, type: 3}
+  - {fileID: 21300000, guid: 1fd22cd0da38c8c4eb307a0f69062d87, type: 3}
+  - {fileID: 21300000, guid: dafeb3f0fbf3e75449ca68e1d6195d84, type: 3}
+  - {fileID: 21300000, guid: 5e340ea3209c3a7499a3a70feacc86dd, type: 3}
+  - {fileID: 21300000, guid: deb28cb372e1ee54fad618f6df43247f, type: 3}
+  - {fileID: 21300000, guid: 827643247c5396045ab168f4d32a7e92, type: 3}
+  - {fileID: 21300000, guid: ab583367fd82145489e90fc5eef1dde2, type: 3}
+  - {fileID: 21300000, guid: c4ff81b7bfabff142bca997c0b82a2d7, type: 3}
+  - {fileID: 21300000, guid: b2091e8997f03334b9982307c497cc96, type: 3}
+  - {fileID: 21300000, guid: 437a9fa932ecb444993f508d7a2a4a83, type: 3}
+  - {fileID: 21300000, guid: 1d53ccea30d239443a353dfc56787f7a, type: 3}
+  - {fileID: 21300000, guid: 06c619fa15d6cb34cba253e671968049, type: 3}
+  - {fileID: 21300000, guid: 40cae34ba44b6bd4ea8bd768a859ce6c, type: 3}
+  - {fileID: 21300000, guid: 387dc9cb29c56b146a2fadccaf58cef4, type: 3}
+  - {fileID: 21300000, guid: a887e55c507f0a24eae8c11437b3251e, type: 3}
+  - {fileID: 21300000, guid: 6c59765e9ab73924a80c334a72fa4ae4, type: 3}
+  - {fileID: 21300000, guid: b08b8c8e61ac8fb42bec46925dec2c2d, type: 3}
+  - {fileID: 21300000, guid: d18b90fe4f8d65849ae22475dd6a1528, type: 3}
+  - {fileID: 21300000, guid: 9701362fbe601df4fbe3f0a4c897797c, type: 3}
+  - {fileID: 21300000, guid: 99683c3fe17b51e459ea305d3727abc7, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - heart
+  - clenchteeth
+  - cute
+  - kiss
+  - clenchteeth2
+  - angry
+  - crazy
+  - evil
+  - happy
+  - expressionless
+  - angryscream
+  - injured
+  - disappoint
+  - blush
+  - bigsmile
+  - kissyface
+  - cry
+  - cool
+  - drool
+  - disappoint2
+  m_RenderDataMap: {}
+  m_Tag: Emojis_All
+  m_IsVariant: 0
