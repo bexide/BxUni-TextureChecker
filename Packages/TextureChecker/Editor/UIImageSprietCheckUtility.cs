@@ -15,15 +15,16 @@ using UnityEngine.UI;
 namespace BX.TextureChecker
 {
     /// <summary>
-    /// Imageのサイズがスプライトのサイズと一致しているかを検証する
+    /// ImageのRectのサイズがSpriteのサイズと一致しているかを検証する
+    /// TightPackingされたSpriteAtlasに登録されているSpriteを使うImageにUseSpriteMeshが設定されているかを検証する
     /// </summary>
-    public class SpriteSizeCheckUtility : TextureCheckerBase
+    public class UIImageSprietCheckUtility : TextureCheckerBase
     {
-        [MenuItem("BeXide/UI Sprite Size Check")]
+        [MenuItem("BeXide/UI Image Sprite Size Check")]
         private static void Create()
         {
             var window =
-                GetWindow<SpriteSizeCheckUtility>(
+                GetWindow<UIImageSprietCheckUtility>(
                     utility: true,
                     title: "UI Sprite Size Checker",
                     focus: true);
@@ -40,7 +41,7 @@ namespace BX.TextureChecker
         private void OnGUI()
         {
             EditorGUILayout.LabelField(
-                "これは UI Image コンポーネントのサイズがSpriteと合致しているかをチェックするツールです。",
+                "これは UI Image コンポーネント設定をチェックするツールです。",
                 new GUIStyle(GUI.skin.label)
                 {
                     wordWrap = true,
@@ -88,6 +89,7 @@ namespace BX.TextureChecker
         private IEnumerator Execute()
         {
             InformationList = new List<InformationEntry>();
+            yield return CollectSpriteAtlas();
 
             switch (m_mode)
             {
@@ -195,7 +197,9 @@ namespace BX.TextureChecker
             {
                 if (go.TryGetComponent<Image>(out var image))
                 {
-                    yield return CheckObject(image);
+                    CurrentObjectPath = go.name;
+                    CheckImage(image);
+                    yield return null;
                 }
             }
         }
@@ -206,30 +210,17 @@ namespace BX.TextureChecker
             Debug.Log($"Path [{path}] ({assetType})");
 
             CurrentAssetPath = path;
-#if false
-            var importer = AssetImporter.GetAtPath(path);
-            yield return CheckAsset(importer);
-#endif
+
             var assets = AssetDatabase.LoadAllAssetsAtPath(path);
             foreach (var obj in assets)
             {
-                if (obj is Image image) { yield return CheckObject(image); }
+                if (obj is Image image)
+                {
+                    CurrentObjectPath = obj.name;
+                    CheckImage(image);
+                    yield return null;
+                }
             }
-        }
-
-        private IEnumerator CheckObject(UnityEngine.Object obj)
-        {
-            //Debug.Log($"Object [{obj.name}] Type=[{obj.GetType()}]");
-            CurrentObjectPath = obj.name;
-#if false
-            var serializedObject = new SerializedObject(obj);
-            var property = serializedObject.GetIterator();
-
-            while (property.Next(true)) { yield return DumpSerializedProperty(property); }
-            yield break;
-#endif
-            if (obj is Image image) { CheckImage(image); }
-            yield break;
         }
 
         private void CheckImage(Image image)
@@ -248,6 +239,21 @@ namespace BX.TextureChecker
 
             if ((image.type == Image.Type.Simple || image.type == Image.Type.Filled) &&
                 spriteSize != rectSize) { AddInformationWarning("RectサイズがSpriteサイズと一致しません"); }
+
+            if (image.type == Image.Type.Simple && !image.useSpriteMesh)
+            {
+                string path = AssetDatabase.GetAssetPath(sprite);
+                string guid = AssetDatabase.AssetPathToGUID(path);
+                if (AtlasedTextureMap.TryGetValue(guid, out bool enableTightPacking))
+                {
+                    if (enableTightPacking)
+                    {
+                        AddInformationWarning(
+                            "TightPackingされたSpriteAtlasに登録されていますがUseSpriteMeshがOFFです");
+                    }
+                }
+            }
+
         }
     }
 }
