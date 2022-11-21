@@ -195,37 +195,18 @@ namespace BX.TextureChecker
 
             foreach (var go in gameObjects)
             {
-                if (go.TryGetComponent<Image>(out var image))
+                if (go.TryGetComponent<Graphic>(out var graphic))
                 {
                     CurrentObjectPath = go.name;
-                    CheckImage(image);
+                    CheckGraphicRaycastTarget(graphic);
                     yield return null;
                 }
             }
         }
-#if false
-        private IEnumerator CheckAssetAtPath(string path)
-        {
-            var assetType = AssetDatabase.GetMainAssetTypeAtPath(path);
-            Debug.Log($"Path [{path}] ({assetType})");
 
-            CurrentAssetPath = path;
-
-            var assets = AssetDatabase.LoadAllAssetsAtPath(path);
-            foreach (var obj in assets)
-            {
-                if (obj is Image image)
-                {
-                    CurrentObjectPath = obj.name;
-                    CheckImage(image);
-                    yield return null;
-                }
-            }
-        }
-#endif
-        private void CheckImage(Image image)
+        private void CheckGraphicRaycastTarget(Graphic graphic)
         {
-            var rectTransform = image.gameObject.transform as RectTransform;
+            var rectTransform = graphic.gameObject.transform as RectTransform;
             Debug.Assert(rectTransform != null);
 
             if (rectTransform.TryGetComponent<Selectable>(out _))
@@ -235,7 +216,7 @@ namespace BX.TextureChecker
             }
 
             // イベントが伝播する元ノードを検索
-            var eventCatcherNode = rectTransform.parent;  
+            var eventCatcherNode = rectTransform.parent;
             while (eventCatcherNode != null &&
                    !eventCatcherNode.TryGetComponent<Selectable>(out _))
             {
@@ -244,7 +225,7 @@ namespace BX.TextureChecker
 
             if (eventCatcherNode == null)
             {
-                if (image.raycastTarget)
+                if (graphic.raycastTarget)
                 {
                     AddInformationWarning("Selectableに包含されないRaycastTargetが有効です");
                 }
@@ -252,33 +233,34 @@ namespace BX.TextureChecker
             }
 
             var rectWorldCorners = new Vector3[4];
-            rectTransform.ForceUpdateRectTransforms();
+            //rectTransform.ForceUpdateRectTransforms();
             rectTransform.GetWorldCorners(rectWorldCorners);
 
-            var eventCatcherRectTransform = eventCatcherNode.gameObject.transform as RectTransform;
+            var eventCatcherRectTransform
+                = eventCatcherNode.gameObject.transform as RectTransform;
             Debug.Assert(eventCatcherRectTransform != null);
 
             var eventWorldCorners = new Vector3[4];
-            eventCatcherRectTransform.ForceUpdateRectTransforms();
+            //eventCatcherRectTransform.ForceUpdateRectTransforms();
             eventCatcherRectTransform.GetWorldCorners(eventWorldCorners);
 
-            Debug.Log($" {image.name}:eventCatcher=[{eventCatcherNode.gameObject.name}]");
+            Debug.Log($" {graphic.name}:eventCatcher=[{eventCatcherNode.gameObject.name}]");
             //Debug.Log($"   catcher={string.Join(",",eventWorldCorners)}");
             //Debug.Log($"   rect   ={string.Join(",",rectWorldCorners)}");
 
             if (CornerContains(eventWorldCorners, rectWorldCorners) &&
-                image.raycastTarget)
+                graphic.raycastTarget)
             {
                 AddInformationWarning("親Rectに包含されているRaycastTargetが有効です");
             }
-        }
 
-        private bool CornerContains(Vector3[] outerCorners, Vector3[] innerCorners)
-        {
-            return (innerCorners[0].x >= outerCorners[0].x &&
-                    innerCorners[0].y >= outerCorners[0].y &&
-                    innerCorners[2].x <= outerCorners[2].x &&
-                    innerCorners[2].y <= outerCorners[2].y);
+            bool CornerContains(Vector3[] outerCorners, Vector3[] innerCorners)
+            {
+                return innerCorners[0].x >= outerCorners[0].x &&
+                       innerCorners[0].y >= outerCorners[0].y &&
+                       innerCorners[2].x <= outerCorners[2].x &&
+                       innerCorners[2].y <= outerCorners[2].y;
+            }
         }
     }
 }
