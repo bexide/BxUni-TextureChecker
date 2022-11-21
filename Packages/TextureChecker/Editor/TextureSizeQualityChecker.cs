@@ -12,7 +12,7 @@ using Unity.Mathematics;
 
 namespace BX.TextureChecker
 {
-    public class TextureSizeQualityCheckUtility : TextureCheckerBase
+    public class TextureSizeQualityChecker : TextureCheckerBase
     {
         static readonly string s_hpfShaderName = "Unlit/Highpass3x3";
 
@@ -37,7 +37,7 @@ namespace BX.TextureChecker
         [MenuItem("BeXide/Texture size quality check")]
         private static void Create()
         {
-            var window = GetWindow<TextureSizeQualityCheckUtility>(
+            var window = GetWindow<TextureSizeQualityChecker>(
                 utility: true,
                 title: "Texture Size Quality Checker",
                 focus: true);

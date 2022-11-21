@@ -18,13 +18,13 @@ namespace BX.TextureChecker
     /// ImageのRectのサイズがSpriteのサイズと一致しているかを検証する
     /// TightPackingされたSpriteAtlasに登録されているSpriteを使うImageにUseSpriteMeshが設定されているかを検証する
     /// </summary>
-    public class UIImageSprietCheckUtility : TextureCheckerBase
+    public class UIImageSpriteChecker : TextureCheckerBase
     {
         [MenuItem("BeXide/UI Image Sprite Size Check")]
         private static void Create()
         {
             var window =
-                GetWindow<UIImageSprietCheckUtility>(
+                GetWindow<UIImageSpriteChecker>(
                     utility: true,
                     title: "UI Sprite Size Checker",
                     focus: true);

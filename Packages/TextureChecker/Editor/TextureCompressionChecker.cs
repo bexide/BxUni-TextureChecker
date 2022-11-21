@@ -17,7 +17,7 @@ namespace BX.TextureChecker
     /// <summary>
     /// テクスチャアセットの圧縮設定をチェックするツール
     /// </summary>
-    public class TextureCompressionCheckUtility : TextureCheckerBase
+    public class TextureCompressionChecker : TextureCheckerBase
     {
         private readonly string[] k_platformStrings =
         {
@@ -39,7 +39,7 @@ namespace BX.TextureChecker
         private static void Create()
         {
             var window =
-                GetWindow<TextureCompressionCheckUtility>(
+                GetWindow<TextureCompressionChecker>(
                     utility: true,
                     title: "Texture Compression Checker",
                     focus: true);
