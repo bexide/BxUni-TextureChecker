@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEditor;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor.SceneManagement;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace BX.TextureChecker
@@ -236,7 +237,7 @@ namespace BX.TextureChecker
             var rectTransform = graphic.gameObject.transform as RectTransform;
             Debug.Assert(rectTransform != null);
 
-            if (rectTransform.TryGetComponent<Selectable>(out _))
+            if (rectTransform.TryGetComponent<IEventSystemHandler>(out _))
             {
                 // このノードでイベントを処理
                 return;
@@ -245,7 +246,7 @@ namespace BX.TextureChecker
             // イベントが伝播する元ノードを検索
             var eventCatcherNode = rectTransform.parent;
             while (eventCatcherNode != null &&
-                   !eventCatcherNode.TryGetComponent<Selectable>(out _))
+                   !eventCatcherNode.TryGetComponent<IEventSystemHandler>(out _))
             {
                 eventCatcherNode = eventCatcherNode.parent;
             }
@@ -256,7 +257,7 @@ namespace BX.TextureChecker
                 {
                     AddInformationWarning(
                         graphic.gameObject,
-                        "Selectableに包含されないRaycastTargetが有効です");
+                        "EventHandlerに包含されないRaycastTargetが有効です");
                 }
                 return;
             }
