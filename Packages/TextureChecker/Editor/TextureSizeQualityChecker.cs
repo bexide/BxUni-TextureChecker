@@ -197,7 +197,7 @@ namespace BX.TextureChecker
             foreach (var result in results)
             {
                 CurrentAssetPath = AssetDatabase.GetAssetPath(result.m_obj);
-                AddInformationWarning($"\te={result.m_error}");
+                AddInformationWarning(result.m_obj.name, $"\te={result.m_error}");
             }
         }
 

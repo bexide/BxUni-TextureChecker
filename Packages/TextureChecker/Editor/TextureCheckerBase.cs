@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.U2D;
@@ -52,13 +53,18 @@ namespace BX.TextureChecker
             public string          m_text;
         }
 
-        //protected string CurrentAssetPath  { get; set; }
         protected string CurrentAssetPath  { get; set; }
-        protected string CurrentObjectPath { get; set; }
 
         protected List<InformationEntry> InformationList { get; set; }
         protected bool                   IsCompleted     { get; set; }
 
+        /// <summary>
+        /// 情報エントリを追加
+        /// </summary>
+        /// <param name="assetPath">アセット欄</param>
+        /// <param name="objectPath">オブジェクト欄</param>
+        /// <param name="type">情報タイプ</param>
+        /// <param name="message">メッセージ文字列</param>
         private void AddInformation(
             string          assetPath,
             string          objectPath,
@@ -75,31 +81,68 @@ namespace BX.TextureChecker
                 });
         }
 
-        protected void AddInformationLog(string message)
+        protected void AddInformationLog(string objectPath, string message)
         {
             AddInformation(
                 CurrentAssetPath,
-                CurrentObjectPath,
+                objectPath,
                 InformationType.Info,
                 message);
         }
 
-        protected void AddInformationWarning(string message)
+        protected void AddInformationWarning(string objectPath, string message)
         {
             AddInformation(
                 CurrentAssetPath,
-                CurrentObjectPath,
+                objectPath,
                 InformationType.Warning,
                 message);
         }
 
-        protected void AddInformationError(string message)
+        protected void AddInformationError(string objectPath, string message)
         {
             AddInformation(
                 CurrentAssetPath,
-                CurrentObjectPath,
+                objectPath,
                 InformationType.Error,
                 message);
+        }
+
+        protected void AddInformationLog(GameObject gameObject, string message)
+        {
+            AddInformation(
+                CurrentAssetPath,
+                GetHierarchyPath(gameObject),
+                InformationType.Info,
+                message);
+        }
+
+        protected void AddInformationWarning(GameObject gameObject, string message)
+        {
+            AddInformation(
+                CurrentAssetPath,
+                GetHierarchyPath(gameObject),
+                InformationType.Warning,
+                message);
+        }
+
+        protected void AddInformationError(GameObject gameObject, string message)
+        {
+            AddInformation(
+                CurrentAssetPath,
+                GetHierarchyPath(gameObject),
+                InformationType.Error,
+                message);
+        }
+
+        public string GetHierarchyPath(GameObject gameObject)
+        {
+            var ancestors = new List<string>();
+            for (var trans = gameObject.transform; trans != null; trans = trans.parent)
+            {
+                ancestors.Add(trans.name);
+            }
+            return string.Join("/", ancestors.AsEnumerable().Reverse());
         }
 
         /// <summary>
@@ -343,7 +386,7 @@ namespace BX.TextureChecker
             bool enableTightPacking = packingSettings.enableTightPacking;
             if (!enableTightPacking)
             {
-                AddInformationWarning("TightPackingではないSpriteAtlasです");
+                AddInformationWarning("", "TightPackingではないSpriteAtlasです");
             }
 
             var serializedObject = new SerializedObject(spriteAtlas);
@@ -366,9 +409,7 @@ namespace BX.TextureChecker
 
                     if (AtlasedTextureMap.TryGetValue(spriteGUID, out _))
                     {
-                        CurrentObjectPath = spritePath;
-                        AddInformationError("SpriteのSpriteAtlasへの登録が重複しています");
-                        CurrentObjectPath = null;
+                        AddInformationError(spritePath, "SpriteのSpriteAtlasへの登録が重複しています");
                     }
                     else { AtlasedTextureMap[spriteGUID] = enableTightPacking; }
                 }

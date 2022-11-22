@@ -171,6 +171,7 @@ namespace BX.TextureChecker
                         }
 
                         AddInformationWarning(
+                            "",
                             $"アトラスに登録されたテクスチャが圧縮されています。({string.Join(",", compressionMessage)})");
                     }
                 }
@@ -180,11 +181,11 @@ namespace BX.TextureChecker
                             s => s.overridden
                                  && IsRawFormat(s.format, s.textureCompression)))
                     {
-                        AddInformationWarning("独立したテクスチャが圧縮されていません。");
+                        AddInformationWarning("", "独立したテクスチャが圧縮されていません。");
                     }
                     else if (!isPOT)
                     {
-                        AddInformationWarning("独立したテクスチャの大きさがPOTではありません。");
+                        AddInformationWarning("", "独立したテクスチャの大きさがPOTではありません。");
                     }
                 }
 

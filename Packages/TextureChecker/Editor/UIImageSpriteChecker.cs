@@ -197,7 +197,6 @@ namespace BX.TextureChecker
             {
                 if (go.TryGetComponent<Image>(out var image))
                 {
-                    CurrentObjectPath = go.name;
                     CheckImage(image);
                     yield return null;
                 }
@@ -216,7 +215,6 @@ namespace BX.TextureChecker
             {
                 if (obj is Image image)
                 {
-                    CurrentObjectPath = obj.name;
                     CheckImage(image);
                     yield return null;
                 }
@@ -228,7 +226,7 @@ namespace BX.TextureChecker
             var sprite = image.sprite;
             if (sprite == null)
             {
-                AddInformationError("ImageにSpriteが設定されていません");
+                AddInformationError(image.gameObject, "ImageにSpriteが設定されていません");
                 return;
             }
 
@@ -238,7 +236,10 @@ namespace BX.TextureChecker
             //Debug.Log($"[{image.name}]:sprite=[{image.sprite.name}] spriteSize={spriteSize}, rectSize={rectSize}");
 
             if ((image.type == Image.Type.Simple || image.type == Image.Type.Filled) &&
-                spriteSize != rectSize) { AddInformationWarning("RectサイズがSpriteサイズと一致しません"); }
+                spriteSize != rectSize)
+            {
+                AddInformationWarning(image.gameObject, "RectサイズがSpriteサイズと一致しません");
+            }
 
             if (image.type == Image.Type.Simple && !image.useSpriteMesh)
             {
@@ -249,6 +250,7 @@ namespace BX.TextureChecker
                     if (enableTightPacking)
                     {
                         AddInformationWarning(
+                            image.gameObject,
                             "TightPackingされたSpriteAtlasに登録されていますがUseSpriteMeshがOFFです");
                     }
                 }

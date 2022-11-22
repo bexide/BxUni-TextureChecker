@@ -197,7 +197,6 @@ namespace BX.TextureChecker
             {
                 if (go.TryGetComponent<Graphic>(out var graphic))
                 {
-                    CurrentObjectPath = go.name;
                     CheckGraphicRaycastTarget(graphic);
                     yield return null;
                 }
@@ -227,7 +226,9 @@ namespace BX.TextureChecker
             {
                 if (graphic.raycastTarget)
                 {
-                    AddInformationWarning("Selectableに包含されないRaycastTargetが有効です");
+                    AddInformationWarning(
+                        graphic.gameObject,
+                        "Selectableに包含されないRaycastTargetが有効です");
                 }
                 return;
             }
@@ -251,7 +252,9 @@ namespace BX.TextureChecker
             if (CornerContains(eventWorldCorners, rectWorldCorners) &&
                 graphic.raycastTarget)
             {
-                AddInformationWarning("親Rectに包含されているRaycastTargetが有効です");
+                AddInformationWarning(
+                    graphic.gameObject,
+                    "親Rectに包含されているRaycastTargetが有効です");
             }
 
             bool CornerContains(Vector3[] outerCorners, Vector3[] innerCorners)
