@@ -30,8 +30,14 @@ namespace BX.TextureChecker
         }
 
         // GUI表示内部情報
-        private int      m_mode;
-        private string[] k_modeTexts = { "Prefab", "Scene", "Hierarchy" };
+        private enum TargetMode
+        {
+            Prefab,
+            Scene,
+            Hierarchy,
+        }
+        private int m_mode;
+        private string[]   k_modeTexts = Enum.GetNames(typeof(TargetMode));
 
         /// <summary>
         /// ウィンドウ表示
@@ -88,17 +94,17 @@ namespace BX.TextureChecker
         {
             InformationList = new List<InformationEntry>();
 
-            switch (m_mode)
+            switch ((TargetMode)m_mode)
             {
-            case 0: // prefab
+            case TargetMode.Prefab:
                 yield return CheckPrefabs();
                 break;
 
-            case 1: // scene
+            case TargetMode.Scene:
                 yield return CheckScenes();
                 break;
 
-            case 2: // hierarchy
+            case TargetMode.Hierarchy:
                 CurrentAssetPath = "";
                 yield return CheckHierarchy();
                 break;
@@ -186,13 +192,12 @@ namespace BX.TextureChecker
             EditorUtility.ClearProgressBar();
         }
 
+        /// <summary>
+        /// HierarchyのGameObjectをチェック
+        /// </summary>
         private IEnumerator CheckHierarchy()
         {
-            var gameObjects = Resources.FindObjectsOfTypeAll(typeof(GameObject))
-                .Where(obj => AssetDatabase.GetAssetOrScenePath(obj).Contains(".unity"))
-                .OfType<GameObject>()
-                .ToList();
-
+            var gameObjects = GetGameObjectsInHierarchy();
             foreach (var go in gameObjects)
             {
                 if (go.TryGetComponent<Graphic>(out var graphic))
@@ -203,6 +208,29 @@ namespace BX.TextureChecker
             }
         }
 
+        /// <summary>
+        /// 現在開かれているHierarchyのGameObjectを取得 
+        /// </summary>
+        List<GameObject> GetGameObjectsInHierarchy()
+        {
+            if (PrefabStageUtility.GetCurrentPrefabStage() == null)
+            {
+                // Sceneモード
+                return Resources.FindObjectsOfTypeAll(typeof(GameObject))
+                    .Where(obj => AssetDatabase.GetAssetOrScenePath(obj).EndsWith(".unity"))
+                    .Select(obj => obj as GameObject)
+                    .ToList(); 
+            }
+            else
+            {
+                // Prefabモード
+                return Resources.FindObjectsOfTypeAll(typeof(GameObject))
+                    .Where(obj => string.IsNullOrEmpty(AssetDatabase.GetAssetOrScenePath(obj)))
+                    .Select(obj => obj as GameObject)
+                    .ToList();
+            }
+        }
+            
         private void CheckGraphicRaycastTarget(Graphic graphic)
         {
             var rectTransform = graphic.gameObject.transform as RectTransform;

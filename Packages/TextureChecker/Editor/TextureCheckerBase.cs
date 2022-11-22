@@ -50,6 +50,7 @@ namespace BX.TextureChecker
             public InformationType m_type;
             public string          m_assetPath;
             public string          m_objectPath;
+            public int             m_objectInstanceId;
             public string          m_text;
         }
 
@@ -63,76 +64,100 @@ namespace BX.TextureChecker
         /// </summary>
         /// <param name="assetPath">アセット欄</param>
         /// <param name="objectPath">オブジェクト欄</param>
+        /// <param name="objectInstanceId">インスタンスID</param>
         /// <param name="type">情報タイプ</param>
         /// <param name="message">メッセージ文字列</param>
         private void AddInformation(
             string          assetPath,
             string          objectPath,
+            int             objectInstanceId,
             InformationType type,
             string          message)
         {
             InformationList.Add(
                 new InformationEntry
                 {
-                    m_assetPath  = assetPath,
-                    m_objectPath = objectPath,
-                    m_type       = type,
-                    m_text       = message,
+                    m_assetPath        = assetPath,
+                    m_objectPath       = objectPath,
+                    m_objectInstanceId = objectInstanceId,
+                    m_type             = type,
+                    m_text             = message,
                 });
         }
 
-        protected void AddInformationLog(string objectPath, string message)
+        protected void AddInformationLog(string objectPath, int instanceId, string message)
         {
             AddInformation(
                 CurrentAssetPath,
                 objectPath,
+                instanceId,
                 InformationType.Info,
                 message);
         }
 
-        protected void AddInformationWarning(string objectPath, string message)
+        protected void AddInformationWarning(string objectPath, int instanceId, string message)
         {
             AddInformation(
                 CurrentAssetPath,
                 objectPath,
+                instanceId,
                 InformationType.Warning,
                 message);
         }
 
-        protected void AddInformationError(string objectPath, string message)
+        protected void AddInformationError(string objectPath, int instanceId, string message)
         {
             AddInformation(
                 CurrentAssetPath,
                 objectPath,
+                instanceId,
                 InformationType.Error,
                 message);
         }
 
-        protected void AddInformationLog(GameObject gameObject, string message)
+        protected void AddInformationLog(UnityEngine.Object obj, string message)
         {
             AddInformation(
                 CurrentAssetPath,
-                GetHierarchyPath(gameObject),
+                obj.name,
+                obj.GetInstanceID(),
                 InformationType.Info,
                 message);
         }
 
-        protected void AddInformationWarning(GameObject gameObject, string message)
+        protected void AddInformationWarning(UnityEngine.Object obj, string message)
         {
             AddInformation(
                 CurrentAssetPath,
-                GetHierarchyPath(gameObject),
+                obj.name,
+                obj.GetInstanceID(),
                 InformationType.Warning,
                 message);
         }
 
-        protected void AddInformationError(GameObject gameObject, string message)
+        protected void AddInformationError(UnityEngine.Object obj, string message)
         {
             AddInformation(
                 CurrentAssetPath,
-                GetHierarchyPath(gameObject),
+                obj.name,
+                obj.GetInstanceID(),
                 InformationType.Error,
                 message);
+        }
+
+        protected void AddInformationLog(string message)
+        {
+            AddInformation(CurrentAssetPath, "", 0, InformationType.Info, message);
+        }
+
+        protected void AddInformationWarning(string message)
+        {
+            AddInformation(CurrentAssetPath, "", 0, InformationType.Warning, message);
+        }
+
+        protected void AddInformationError(string message)
+        {
+            AddInformation(CurrentAssetPath, "", 0, InformationType.Error, message);
         }
 
         public string GetHierarchyPath(GameObject gameObject)
@@ -294,9 +319,14 @@ namespace BX.TextureChecker
                     EditorGUIUtility.PingObject(obj);
                 }
 
-                EditorGUILayout.LabelField(
-                    info.m_objectPath,
-                    GUILayout.Width(m_columnHeader.GetColumnRect(2).width));
+                if (GUILayout.Button(
+                        info.m_objectPath,
+                        EditorStyles.objectField,
+                        GUILayout.Width(m_columnHeader.GetColumnRect(2).width)))
+                {
+                    Selection.activeInstanceID = info.m_objectInstanceId; 
+                    EditorGUIUtility.PingObject(info.m_objectInstanceId);
+                }
 
                 EditorGUILayout.LabelField(
                     info.m_text,
@@ -386,7 +416,7 @@ namespace BX.TextureChecker
             bool enableTightPacking = packingSettings.enableTightPacking;
             if (!enableTightPacking)
             {
-                AddInformationWarning("", "TightPackingではないSpriteAtlasです");
+                AddInformationWarning("", 0, "TightPackingではないSpriteAtlasです");
             }
 
             var serializedObject = new SerializedObject(spriteAtlas);
@@ -409,7 +439,11 @@ namespace BX.TextureChecker
 
                     if (AtlasedTextureMap.TryGetValue(spriteGUID, out _))
                     {
-                        AddInformationError(spritePath, "SpriteのSpriteAtlasへの登録が重複しています");
+                        var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(spritePath);
+                        AddInformationError(
+                            spritePath,
+                            obj.GetInstanceID(),
+                            "SpriteのSpriteAtlasへの登録が重複しています");
                     }
                     else { AtlasedTextureMap[spriteGUID] = enableTightPacking; }
                 }
