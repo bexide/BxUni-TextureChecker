@@ -35,7 +35,7 @@ namespace BX.TextureChecker
             "tvOS",
         };
 
-        [MenuItem("BeXide/Texture Compression Check")]
+        [MenuItem("BeXide/Texture Checker/Texture Compression Check")]
         private static void Create()
         {
             var window =

@@ -34,7 +34,7 @@ namespace BX.TextureChecker
 
         private List<CheckResultType> CheckResults { get; set; }
 
-        [MenuItem("BeXide/Texture size quality check")]
+        [MenuItem("BeXide/Texture Checker/Texture size quality check")]
         private static void Create()
         {
             var window = GetWindow<TextureSizeQualityChecker>(

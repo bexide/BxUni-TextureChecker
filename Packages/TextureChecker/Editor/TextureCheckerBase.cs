@@ -13,7 +13,7 @@ using UnityEditor.U2D;
 
 namespace BX.TextureChecker
 {
-    public class TextureCheckerBase : EditorWindow
+    public abstract class TextureCheckerBase : EditorWindow
     {
         protected static readonly string s_defaultPath = "Assets/Application";
 
