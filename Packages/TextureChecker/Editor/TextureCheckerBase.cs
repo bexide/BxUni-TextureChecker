@@ -145,6 +145,92 @@ namespace BX.TextureChecker
             return string.Join("/", ancestors.AsEnumerable().Reverse());
         }
 
+        /// <summary>初期化</summary>
+        protected virtual void Initialize()
+        {
+            if (TargetFolder == null)
+            {
+                TargetFolder = AssetDatabase.LoadAssetAtPath(
+                    s_defaultPath,
+                    typeof(DefaultAsset)) as DefaultAsset;
+            }
+
+            m_errorIconSmall
+                = EditorGUIUtility.Load("icons/console.erroricon.sml.png") as Texture2D;
+            m_warningIconSmall
+                = EditorGUIUtility.Load("icons/console.warnicon.sml.png") as Texture2D;
+            m_infoIconSmall
+                = EditorGUIUtility.Load("icons/console.infoicon.sml.png") as Texture2D;
+            var logStyle = new GUIStyle();
+
+            Texture2D logBgOdd;
+            Texture2D logBgEven;
+            Texture2D logBgSelected;
+
+            if (EditorGUIUtility.isProSkin)
+            {
+                logStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
+                logBgOdd = EditorGUIUtility.Load(
+                    "builtin skins/darkskin/images/cn entrybackodd.png") as Texture2D;
+                logBgEven = EditorGUIUtility.Load(
+                    "builtin skins/darkskin/images/cnentrybackeven.png") as Texture2D;
+                logBgSelected
+                    = EditorGUIUtility.Load("builtin skins/darkskin/images/menuitemhover.png")
+                        as Texture2D;
+            }
+            else
+            {
+                logStyle.normal.textColor = new Color(0.1f, 0.1f, 0.1f);
+                logBgOdd = EditorGUIUtility.Load(
+                    "builtin skins/lightskin/images/cn entrybackodd.png") as Texture2D;
+                logBgEven = EditorGUIUtility.Load(
+                    "builtin skins/lightskin/images/cnentrybackeven.png") as Texture2D;
+                logBgSelected
+                    = EditorGUIUtility.Load("builtin skins/lightskin/images/menuitemhover.png")
+                        as Texture2D;
+            }
+
+            m_logStyleOdd                        = new GUIStyle(logStyle);
+            m_logStyleEven                       = new GUIStyle(logStyle);
+            m_logStyleSelected                   = new GUIStyle(logStyle);
+            m_logStyleOdd.normal.background      = logBgOdd;
+            m_logStyleEven.normal.background     = logBgEven;
+            m_logStyleSelected.normal.background = logBgSelected;
+
+            // マルチカラムヘッダ
+            m_columns = new[]
+            {
+                new MultiColumnHeaderState.Column()
+                {
+                    width = 20,
+                },
+                new MultiColumnHeaderState.Column()
+                {
+                    headerContent       = new GUIContent("Asset Path"),
+                    width               = 200,
+                    autoResize          = true,
+                    headerTextAlignment = TextAlignment.Left
+                },
+                new MultiColumnHeaderState.Column()
+                {
+                    headerContent       = new GUIContent("Object"),
+                    width               = 100,
+                    autoResize          = true,
+                    headerTextAlignment = TextAlignment.Left
+                },
+                new MultiColumnHeaderState.Column()
+                {
+                    headerContent       = new GUIContent("Information"),
+                    width               = 200,
+                    autoResize          = true,
+                    headerTextAlignment = TextAlignment.Left
+                },
+            };
+            m_columnHeader
+                = new MultiColumnHeader(new MultiColumnHeaderState(m_columns)) { height = 25 };
+            m_columnHeader.ResizeToFit();
+        }
+
         /// <summary>
         /// 情報の描画
         /// </summary>
@@ -235,92 +321,6 @@ namespace BX.TextureChecker
         {
             InformationList = null;
             IsCompleted     = false;
-        }
-
-        /// <summary>初期化</summary>
-        protected virtual void Initialize()
-        {
-            if (TargetFolder == null)
-            {
-                TargetFolder = AssetDatabase.LoadAssetAtPath(
-                    s_defaultPath,
-                    typeof(DefaultAsset)) as DefaultAsset;
-            }
-
-            m_errorIconSmall
-                = EditorGUIUtility.Load("icons/console.erroricon.sml.png") as Texture2D;
-            m_warningIconSmall
-                = EditorGUIUtility.Load("icons/console.warnicon.sml.png") as Texture2D;
-            m_infoIconSmall
-                = EditorGUIUtility.Load("icons/console.infoicon.sml.png") as Texture2D;
-            var logStyle = new GUIStyle();
-
-            Texture2D logBgOdd;
-            Texture2D logBgEven;
-            Texture2D logBgSelected;
-
-            if (EditorGUIUtility.isProSkin)
-            {
-                logStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
-                logBgOdd = EditorGUIUtility.Load(
-                    "builtin skins/darkskin/images/cn entrybackodd.png") as Texture2D;
-                logBgEven = EditorGUIUtility.Load(
-                    "builtin skins/darkskin/images/cnentrybackeven.png") as Texture2D;
-                logBgSelected
-                    = EditorGUIUtility.Load("builtin skins/darkskin/images/menuitemhover.png")
-                        as Texture2D;
-            }
-            else
-            {
-                logStyle.normal.textColor = new Color(0.1f, 0.1f, 0.1f);
-                logBgOdd = EditorGUIUtility.Load(
-                    "builtin skins/lightskin/images/cn entrybackodd.png") as Texture2D;
-                logBgEven = EditorGUIUtility.Load(
-                    "builtin skins/lightskin/images/cnentrybackeven.png") as Texture2D;
-                logBgSelected
-                    = EditorGUIUtility.Load("builtin skins/lightskin/images/menuitemhover.png")
-                        as Texture2D;
-            }
-
-            m_logStyleOdd                        = new GUIStyle(logStyle);
-            m_logStyleEven                       = new GUIStyle(logStyle);
-            m_logStyleSelected                   = new GUIStyle(logStyle);
-            m_logStyleOdd.normal.background      = logBgOdd;
-            m_logStyleEven.normal.background     = logBgEven;
-            m_logStyleSelected.normal.background = logBgSelected;
-
-            // マルチカラムヘッダ
-            m_columns = new[]
-            {
-                new MultiColumnHeaderState.Column()
-                {
-                    width = 20,
-                },
-                new MultiColumnHeaderState.Column()
-                {
-                    headerContent       = new GUIContent("Asset Path"),
-                    width               = 200,
-                    autoResize          = true,
-                    headerTextAlignment = TextAlignment.Left
-                },
-                new MultiColumnHeaderState.Column()
-                {
-                    headerContent       = new GUIContent("Object"),
-                    width               = 100,
-                    autoResize          = true,
-                    headerTextAlignment = TextAlignment.Left
-                },
-                new MultiColumnHeaderState.Column()
-                {
-                    headerContent       = new GUIContent("Information"),
-                    width               = 200,
-                    autoResize          = true,
-                    headerTextAlignment = TextAlignment.Left
-                },
-            };
-            m_columnHeader
-                = new MultiColumnHeader(new MultiColumnHeaderState(m_columns)) { height = 25 };
-            m_columnHeader.ResizeToFit();
         }
 
         /// <summary>
