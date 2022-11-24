@@ -49,10 +49,10 @@ namespace BX.TextureChecker
             var newTarget =
                 EditorGUILayout.ObjectField(
                     "対象フォルダ",
-                    TargetFolder,
+                    Settings.TargetFolder,
                     typeof(DefaultAsset),
                     allowSceneObjects: false);
-            TargetFolder = newTarget as DefaultAsset;
+            Settings.TargetFolder = newTarget as DefaultAsset;
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("対象アセット種別");
@@ -110,7 +110,7 @@ namespace BX.TextureChecker
         private IEnumerator CheckPrefabs()
         {
             // Prefabを列挙
-            string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
+            string targetPath = AssetDatabase.GetAssetPath(Settings.TargetFolder);
             if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
 
             string[] prefabGuids = AssetDatabase.FindAssets("t:prefab", new[] { targetPath });
@@ -151,7 +151,7 @@ namespace BX.TextureChecker
 
         private IEnumerator CheckScenes()
         {
-            string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
+            string targetPath = AssetDatabase.GetAssetPath(Settings.TargetFolder);
             if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
 
             string[] sceneGuids = AssetDatabase.FindAssets("t:scene", new[] { targetPath });

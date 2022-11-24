@@ -4,6 +4,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+
 using UnityEngine;
 using UnityEngine.U2D;
 
@@ -38,8 +40,8 @@ namespace BX.TextureChecker
         private       int m_viewIndex = 0;
         private const int k_pageViews = 100;
 
-        /// <summary>対象フォルダ</summary>
-        protected DefaultAsset TargetFolder { get; set; }
+        /// <summary>設定</summary>
+        protected TextureCheckerSettings Settings { get; set; }
 
         /// <summary>アトラスに登録されているテクスチャ一覧</summary>
         protected Dictionary<string, bool> AtlasedTextureMap { get; set; }
@@ -170,58 +172,48 @@ namespace BX.TextureChecker
         }
 
         /// <summary>初期化</summary>
-        protected virtual void Initialize()
+        protected virtual void Initialize(string checkerId)
         {
-            if (TargetFolder == null)
+            LoadSettings(checkerId);
+            InitializeIcons();
+            InitializeLogStyle();
+            InitializeMultiColumnHeader();
+        }
+
+        private void LoadSettings(string id)
+        {
+            string settingsPath = $"Assets/Editor/BxTextureChecker_{id}.asset";
+            Settings = AssetDatabase.LoadAssetAtPath<TextureCheckerSettings>(settingsPath);
+
+            if (Settings == null)
             {
-                TargetFolder = AssetDatabase.LoadAssetAtPath(
+                Settings = CreateInstance<TextureCheckerSettings>();
+                CheckDirectory(settingsPath);
+                AssetDatabase.CreateAsset(Settings, settingsPath);
+            }
+
+            if (Settings.TargetFolder == null)
+            {
+                Settings.TargetFolder = AssetDatabase.LoadAssetAtPath(
                     s_defaultPath,
                     typeof(DefaultAsset)) as DefaultAsset;
             }
+        }
 
-            m_errorIconSmall
-                = EditorGUIUtility.Load("icons/console.erroricon.sml.png") as Texture2D;
-            m_warningIconSmall
-                = EditorGUIUtility.Load("icons/console.warnicon.sml.png") as Texture2D;
-            m_infoIconSmall
-                = EditorGUIUtility.Load("icons/console.infoicon.sml.png") as Texture2D;
-            var logStyle = new GUIStyle();
-
-            Texture2D logBgOdd;
-            Texture2D logBgEven;
-            Texture2D logBgSelected;
-
-            if (EditorGUIUtility.isProSkin)
+        private void CheckDirectory(string path)
+        {
+            string directory = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
-                logStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
-                logBgOdd = EditorGUIUtility.Load(
-                    "builtin skins/darkskin/images/cn entrybackodd.png") as Texture2D;
-                logBgEven = EditorGUIUtility.Load(
-                    "builtin skins/darkskin/images/cnentrybackeven.png") as Texture2D;
-                logBgSelected
-                    = EditorGUIUtility.Load("builtin skins/darkskin/images/menuitemhover.png")
-                        as Texture2D;
+                Directory.CreateDirectory(directory);
             }
-            else
-            {
-                logStyle.normal.textColor = new Color(0.1f, 0.1f, 0.1f);
-                logBgOdd = EditorGUIUtility.Load(
-                    "builtin skins/lightskin/images/cn entrybackodd.png") as Texture2D;
-                logBgEven = EditorGUIUtility.Load(
-                    "builtin skins/lightskin/images/cnentrybackeven.png") as Texture2D;
-                logBgSelected
-                    = EditorGUIUtility.Load("builtin skins/lightskin/images/menuitemhover.png")
-                        as Texture2D;
-            }
-
-            m_logStyleOdd                        = new GUIStyle(logStyle);
-            m_logStyleEven                       = new GUIStyle(logStyle);
-            m_logStyleSelected                   = new GUIStyle(logStyle);
-            m_logStyleOdd.normal.background      = logBgOdd;
-            m_logStyleEven.normal.background     = logBgEven;
-            m_logStyleSelected.normal.background = logBgSelected;
-
-            // マルチカラムヘッダ
+        }
+            
+        /// <summary>
+        /// マルチカラムヘッダ初期化
+        /// </summary>
+        private void InitializeMultiColumnHeader()
+        {
             m_columns = new[]
             {
                 new MultiColumnHeaderState.Column()
@@ -253,6 +245,63 @@ namespace BX.TextureChecker
             m_columnHeader
                 = new MultiColumnHeader(new MultiColumnHeaderState(m_columns)) { height = 25 };
             m_columnHeader.ResizeToFit();
+        }
+
+        /// <summary>
+        /// スタイル初期化
+        /// </summary>
+        private void InitializeLogStyle()
+        {
+            var logStyle = new GUIStyle();
+
+            Texture2D logBgOdd;
+            Texture2D logBgEven;
+            Texture2D logBgSelected;
+
+            if (EditorGUIUtility.isProSkin)
+            {
+                logStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
+                logBgOdd = EditorGUIUtility.Load(
+                    "builtin skins/darkskin/images/cn entrybackodd.png") as Texture2D;
+                logBgEven
+                    = EditorGUIUtility.Load("builtin skins/darkskin/images/cnentrybackeven.png") as
+                        Texture2D;
+                logBgSelected
+                    = EditorGUIUtility.Load("builtin skins/darkskin/images/menuitemhover.png")
+                        as Texture2D;
+            }
+            else
+            {
+                logStyle.normal.textColor = new Color(0.1f, 0.1f, 0.1f);
+                logBgOdd = EditorGUIUtility.Load(
+                    "builtin skins/lightskin/images/cn entrybackodd.png") as Texture2D;
+                logBgEven
+                    = EditorGUIUtility.Load("builtin skins/lightskin/images/cnentrybackeven.png") as
+                        Texture2D;
+                logBgSelected
+                    = EditorGUIUtility.Load("builtin skins/lightskin/images/menuitemhover.png")
+                        as Texture2D;
+            }
+
+            m_logStyleOdd                        = new GUIStyle(logStyle);
+            m_logStyleEven                       = new GUIStyle(logStyle);
+            m_logStyleSelected                   = new GUIStyle(logStyle);
+            m_logStyleOdd.normal.background      = logBgOdd;
+            m_logStyleEven.normal.background     = logBgEven;
+            m_logStyleSelected.normal.background = logBgSelected;
+        }
+
+        /// <summary>
+        /// アイコンリソース読み込み
+        /// </summary>
+        private void InitializeIcons()
+        {
+            m_errorIconSmall
+                = EditorGUIUtility.Load("icons/console.erroricon.sml.png") as Texture2D;
+            m_warningIconSmall
+                = EditorGUIUtility.Load("icons/console.warnicon.sml.png") as Texture2D;
+            m_infoIconSmall
+                = EditorGUIUtility.Load("icons/console.infoicon.sml.png") as Texture2D;
         }
 
         /// <summary>
@@ -363,7 +412,7 @@ namespace BX.TextureChecker
         {
             AtlasedTextureMap = new();
 
-            string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
+            string targetPath = AssetDatabase.GetAssetPath(Settings.TargetFolder);
             if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
 
             string[] guids = AssetDatabase.FindAssets("t:SpriteAtlas", new[] { targetPath });

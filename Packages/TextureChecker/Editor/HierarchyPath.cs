@@ -1,6 +1,7 @@
 ﻿// 2022-11-24 BeXide,Inc.
 // by Y.Hayashi
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.SceneManagement;
@@ -11,8 +12,10 @@ namespace BX.TextureChecker
     /// <summary>
     /// Hierarchy内のGameObjectの位置を示す情報
     /// </summary>
+    [Serializable]
     public class HierarchyPath
     {
+        [Serializable]
         public class NodeEntry
         {
             public string NodeName     { get; }

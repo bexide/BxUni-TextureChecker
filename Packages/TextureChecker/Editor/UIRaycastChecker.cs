@@ -23,7 +23,7 @@ namespace BX.TextureChecker
                     utility: true,
                     title: "UI Raycast Status Checker",
                     focus: true);
-            window.Initialize();
+            window.Initialize("UIRaycastStatusChecker");
         }
 
         protected override void CheckComponent(GameObject gameObject)

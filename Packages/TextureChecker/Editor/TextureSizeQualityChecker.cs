@@ -41,12 +41,12 @@ namespace BX.TextureChecker
                 utility: true,
                 title: "Texture Size Quality Checker",
                 focus: true);
-            window.Initialize();
+            window.Initialize("TextureSizeQualityChecker");
         }
 
-        protected override void Initialize()
+        protected override void Initialize(string id)
         {
-            base.Initialize();
+            base.Initialize(id);
 
             HighPassShader = Shader.Find(s_hpfShaderName);
             Debug.Assert(HighPassShader != null);
@@ -68,10 +68,10 @@ namespace BX.TextureChecker
 
             var newTarget = EditorGUILayout.ObjectField(
                 "対象フォルダ",
-                TargetFolder,
+                Settings.TargetFolder,
                 typeof(DefaultAsset),
                 allowSceneObjects: false);
-            TargetFolder = newTarget as DefaultAsset;
+            Settings.TargetFolder = newTarget as DefaultAsset;
 
             SizeThreshold = EditorGUILayout.IntSlider("サイズしきい値", SizeThreshold, 0, 512);
 
@@ -130,7 +130,7 @@ namespace BX.TextureChecker
         private IEnumerator CheckTexture2D()
         {
             // テクスチャアセットを列挙
-            string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
+            string targetPath = AssetDatabase.GetAssetPath(Settings.TargetFolder);
             if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
 
             string[] guids = AssetDatabase.FindAssets(

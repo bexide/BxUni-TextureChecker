@@ -43,7 +43,7 @@ namespace BX.TextureChecker
                     utility: true,
                     title: "Texture Compression Checker",
                     focus: true);
-            window.Initialize();
+            window.Initialize("TextureCompressionChecker");
         }
 
         private Vector2 m_informationScrollPosition;
@@ -67,10 +67,10 @@ namespace BX.TextureChecker
             var newTarget =
                 EditorGUILayout.ObjectField(
                     "対象フォルダ",
-                    TargetFolder,
+                    Settings.TargetFolder,
                     typeof(DefaultAsset),
                     allowSceneObjects: false);
-            TargetFolder = newTarget as DefaultAsset;
+            Settings.TargetFolder = newTarget as DefaultAsset;
 
             if (InformationList == null)
             {
@@ -110,7 +110,7 @@ namespace BX.TextureChecker
         private IEnumerator CheckTexture2D()
         {
             // テクスチャアセットを列挙
-            string targetPath = AssetDatabase.GetAssetPath(TargetFolder);
+            string targetPath = AssetDatabase.GetAssetPath(Settings.TargetFolder);
             if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }
 
             string[] guids = AssetDatabase.FindAssets("t:Texture2D", new[] { targetPath });

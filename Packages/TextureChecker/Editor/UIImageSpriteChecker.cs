@@ -22,7 +22,7 @@ namespace BX.TextureChecker
                     utility: true,
                     title: "UI Sprite Size Checker",
                     focus: true);
-            window.Initialize();
+            window.Initialize("UISpriteSizeChecker");
         }
 
         protected override string GetLabel() => "UI.Imageの設定をチェックします";
