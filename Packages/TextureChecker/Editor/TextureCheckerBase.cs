@@ -355,7 +355,7 @@ namespace BX.TextureChecker
             {
                 new MultiColumnHeaderState.Column()
                 {
-                    width = 20,
+                    width = 16,
                 },
                 new MultiColumnHeaderState.Column()
                 {
@@ -404,6 +404,8 @@ namespace BX.TextureChecker
                 return;
             }
 
+            EditorGUILayout.Space(4);
+
             m_informationScrollPosition = EditorGUILayout.BeginScrollView(
                 m_informationScrollPosition,
                 false,
@@ -435,12 +437,12 @@ namespace BX.TextureChecker
 
                 EditorGUILayout.LabelField(
                     new GUIContent(icon),
-                    GUILayout.Width(m_columnHeader.GetColumnRect(0).width));
+                    GUILayout.Width(m_columnHeader.GetColumnRect(0).width-2));
 
                 if (GUILayout.Button(
                         info.AssetPath,
                         EditorStyles.objectField,
-                        GUILayout.Width(m_columnHeader.GetColumnRect(1).width)))
+                        GUILayout.Width(m_columnHeader.GetColumnRect(1).width-2)))
                 {
                     var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(
                         info.AssetPath);
@@ -450,7 +452,7 @@ namespace BX.TextureChecker
                 if (GUILayout.Button(
                         info.GetObjectString(),
                         EditorStyles.objectField,
-                        GUILayout.Width(m_columnHeader.GetColumnRect(2).width)))
+                        GUILayout.Width(m_columnHeader.GetColumnRect(2).width-2)))
                 {
                     int instanceId = info.GetObjectInstanceId();
                     Selection.activeInstanceID = instanceId; 
@@ -459,7 +461,7 @@ namespace BX.TextureChecker
 
                 EditorGUILayout.LabelField(
                     info.Text,
-                    GUILayout.Width(m_columnHeader.GetColumnRect(3).width));
+                    GUILayout.Width(m_columnHeader.GetColumnRect(3).width-2));
 
                 EditorGUILayout.EndHorizontal();
             }
