@@ -99,7 +99,7 @@ namespace BX.TextureChecker
                 break;
 
             case TargetMode.Hierarchy:
-                CurrentAssetPath = "";
+                CurrentAsset = default;
                 CheckHierarchy();
                 break;
             }
@@ -128,7 +128,7 @@ namespace BX.TextureChecker
                     continue;
                 }
 
-                CurrentAssetPath = path;
+                CurrentAsset = new GUID(guid);
                 var prefabAsset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 AssetDatabase.OpenAsset(prefabAsset);
                 CheckHierarchy();
@@ -171,7 +171,7 @@ namespace BX.TextureChecker
                 Debug.Log($"Scene path[{path}]");
 
                 EditorSceneManager.OpenScene(path);
-                CurrentAssetPath = path;
+                CurrentAsset = new GUID(guid);
                 CheckHierarchy();
 
                 // プログレスバー

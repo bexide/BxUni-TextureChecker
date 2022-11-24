@@ -158,7 +158,7 @@ namespace BX.TextureChecker
                     }
                     else
                     {
-                        CurrentAssetPath = path;
+                        CurrentAsset = new GUID(guid);
                         yield return CheckTexture2D(texture2d);
                     }
                 }
@@ -196,7 +196,8 @@ namespace BX.TextureChecker
             }
             foreach (var result in results)
             {
-                CurrentAssetPath = AssetDatabase.GetAssetPath(result.m_obj);
+                string path = AssetDatabase.GetAssetPath(result.m_obj);
+                CurrentAsset = AssetDatabase.GUIDFromAssetPath(path);
                 AddInformationWarning($"\te={result.m_error}");
             }
         }
@@ -210,7 +211,7 @@ namespace BX.TextureChecker
                 "txt");
             using var stream = new System.IO.StreamWriter(filePath);
 
-            foreach (var info in InformationList) { stream.WriteLine(info.AssetPath); }
+            foreach (var info in InformationList) { stream.WriteLine(info.AssetGuid); }
         }
 
         /// <summary>

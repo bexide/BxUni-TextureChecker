@@ -47,20 +47,20 @@ namespace BX.TextureChecker
         protected class InformationEntry
         {
             public InformationType Type          { get; }
-            public string          AssetPath     { get; }
+            public GUID            AssetGuid     { get; }
             public string          ObjectPath    { get; }
             public HierarchyPath   HierarchyPath { get; }
             public string          Text          { get; }
 
             public InformationEntry(
                 InformationType type,
-                string          assetPath,
+                GUID            assetGuid,
                 string          objectPath,
                 HierarchyPath   hierarchyPath,
                 string          text)
             {
                 Type          = type;
-                AssetPath     = assetPath;
+                AssetGuid     = assetGuid;
                 ObjectPath    = objectPath;
                 HierarchyPath = hierarchyPath;
                 Text          = text;
@@ -80,7 +80,7 @@ namespace BX.TextureChecker
             }
         }
 
-        protected string CurrentAssetPath  { get; set; }
+        protected GUID CurrentAsset  { get; set; }
 
         protected List<InformationEntry> InformationList { get; set; }
         protected bool                   IsCompleted     { get; set; }
@@ -94,7 +94,7 @@ namespace BX.TextureChecker
         /// <param name="type">情報タイプ</param>
         /// <param name="message">メッセージ文字列</param>
         private void AddInformation(
-            string          assetPath,
+            GUID            assetPath,
             string          objectPath,
             HierarchyPath   hierarchyPath,
             InformationType type,
@@ -111,23 +111,23 @@ namespace BX.TextureChecker
 
         protected void AddInformationLog(string objectPath, string message)
         {
-            AddInformation(CurrentAssetPath, objectPath, null, InformationType.Info, message);
+            AddInformation(CurrentAsset, objectPath, null, InformationType.Info, message);
         }
 
         protected void AddInformationWarning(string objectPath, string message)
         {
-            AddInformation(CurrentAssetPath, objectPath, null, InformationType.Warning, message);
+            AddInformation(CurrentAsset, objectPath, null, InformationType.Warning, message);
         }
 
         protected void AddInformationError(string objectPath, string message)
         {
-            AddInformation(CurrentAssetPath, objectPath, null, InformationType.Error, message);
+            AddInformation(CurrentAsset, objectPath, null, InformationType.Error, message);
         }
 
         protected void AddInformationLog(GameObject gameObject, string message)
         {
             AddInformation(
-                CurrentAssetPath,
+                CurrentAsset,
                 string.Empty,
                 HierarchyPath.Create(gameObject),
                 InformationType.Info,
@@ -137,7 +137,7 @@ namespace BX.TextureChecker
         protected void AddInformationWarning(GameObject gameObject, string message)
         {
             AddInformation(
-                CurrentAssetPath,
+                CurrentAsset,
                 string.Empty,
                 HierarchyPath.Create(gameObject),
                 InformationType.Warning,
@@ -147,7 +147,7 @@ namespace BX.TextureChecker
         protected void AddInformationError(GameObject gameObject, string message)
         {
             AddInformation(
-                CurrentAssetPath,
+                CurrentAsset,
                 string.Empty,
                 HierarchyPath.Create(gameObject),
                 InformationType.Error,
@@ -156,17 +156,17 @@ namespace BX.TextureChecker
 
         protected void AddInformationLog(string message)
         {
-            AddInformation(CurrentAssetPath, string.Empty, null, InformationType.Info, message);
+            AddInformation(CurrentAsset, string.Empty, null, InformationType.Info, message);
         }
 
         protected void AddInformationWarning(string message)
         {
-            AddInformation(CurrentAssetPath, string.Empty, null, InformationType.Warning, message);
+            AddInformation(CurrentAsset, string.Empty, null, InformationType.Warning, message);
         }
 
         protected void AddInformationError(string message)
         {
-            AddInformation(CurrentAssetPath, string.Empty, null, InformationType.Error, message);
+            AddInformation(CurrentAsset, string.Empty, null, InformationType.Error, message);
         }
 
         /// <summary>初期化</summary>
@@ -310,13 +310,13 @@ namespace BX.TextureChecker
                     new GUIContent(icon),
                     GUILayout.Width(m_columnHeader.GetColumnRect(0).width-2));
 
+                string assetPath = AssetDatabase.GUIDToAssetPath(info.AssetGuid);
                 if (GUILayout.Button(
-                        info.AssetPath,
+                        assetPath,
                         EditorStyles.objectField,
                         GUILayout.Width(m_columnHeader.GetColumnRect(1).width-2)))
                 {
-                    var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(
-                        info.AssetPath);
+                    var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
                     EditorGUIUtility.PingObject(obj);
                 }
 
@@ -388,7 +388,7 @@ namespace BX.TextureChecker
                     }
                     else
                     {
-                        CurrentAssetPath = path;
+                        CurrentAsset = new GUID(guid);
                         yield return ReadSpriteAtlas(spriteAtlas);
                     }
                 }

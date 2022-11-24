@@ -128,7 +128,7 @@ namespace BX.TextureChecker
                     continue;
                 }
 
-                CurrentAssetPath = path;
+                CurrentAsset = new GUID(guid);
 
                 var textureImporter = AssetImporter.GetAtPath(path) as TextureImporter;
                 if (textureImporter == null)
