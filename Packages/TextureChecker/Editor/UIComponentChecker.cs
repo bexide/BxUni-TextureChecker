@@ -10,8 +10,6 @@ using UnityEngine;
 using UnityEditor;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor.SceneManagement;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace BX.TextureChecker
 {

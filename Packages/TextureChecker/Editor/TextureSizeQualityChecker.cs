@@ -197,7 +197,7 @@ namespace BX.TextureChecker
             foreach (var result in results)
             {
                 CurrentAssetPath = AssetDatabase.GetAssetPath(result.m_obj);
-                AddInformationWarning(result.m_obj, $"\te={result.m_error}");
+                AddInformationWarning($"\te={result.m_error}");
             }
         }
 
@@ -210,7 +210,7 @@ namespace BX.TextureChecker
                 "txt");
             using var stream = new System.IO.StreamWriter(filePath);
 
-            foreach (var info in InformationList) { stream.WriteLine(info.m_assetPath); }
+            foreach (var info in InformationList) { stream.WriteLine(info.AssetPath); }
         }
 
         /// <summary>
