@@ -38,27 +38,15 @@ namespace BX.TextureChecker
 
         public HashSet<AssetObject> IgnoreAssetObjectSet => m_ignoreAssetObjectSet;
 
-        public void AddIgnoreAssetObject(AssetObject assetObject)
-        {
-            m_ignoreAssetObjectSet.Add(assetObject);
-            EditorUtility.SetDirty(this);
-        }
-
-        public void RemoveIgnoreAssetObject(AssetObject assetObject)
-        {
-            m_ignoreAssetObjectSet.Remove(assetObject);
-            EditorUtility.SetDirty(this);
-        }
-
         public void SetIgnoreAssetObject(AssetObject assetObject, bool active)
         {
             if (active)
             {
-                AddIgnoreAssetObject(assetObject);
+                m_ignoreAssetObjectSet.Add(assetObject);                
             }
             else
             {
-                RemoveIgnoreAssetObject(assetObject);
+                m_ignoreAssetObjectSet.Remove(assetObject);
             }
         }
 
