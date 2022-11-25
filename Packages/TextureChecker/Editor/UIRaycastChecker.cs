@@ -10,7 +10,7 @@ namespace BX.TextureChecker
 {
     /// <summary>
     /// </summary>
-    public class UIRaycastChecker : UIComponentChecker
+    internal class UIRaycastChecker : UIComponentChecker
     {
         protected override string GetLabel() =>
             "これはUI.GraphicコンポーネントのRaycastTarget設定をチェックするツールです";

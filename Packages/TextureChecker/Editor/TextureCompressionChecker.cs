@@ -17,7 +17,7 @@ namespace BX.TextureChecker
     /// <summary>
     /// テクスチャアセットの圧縮設定をチェックするツール
     /// </summary>
-    public class TextureCompressionChecker : TextureCheckerBase
+    internal class TextureCompressionChecker : TextureCheckerBase
     {
         private readonly string[] k_platformStrings =
         {
@@ -48,7 +48,7 @@ namespace BX.TextureChecker
 
         private Vector2 m_informationScrollPosition;
 
-        private       int m_viewIndex = 0;
+        //private       int m_viewIndex = 0;
         private const int k_pageViews = 100;
 
         /// <summary>
@@ -78,11 +78,6 @@ namespace BX.TextureChecker
                     "チェックを開始するには下のチェックボタンを押してください。",
                     MessageType.Info);
             }
-            else
-            {
-                // 情報ウィンドウ
-                DrawInformation();
-            }
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("チェック", GUILayout.MaxWidth(120)))
@@ -93,8 +88,10 @@ namespace BX.TextureChecker
             EditorGUI.BeginDisabledGroup(InformationList == null);
             if (GUILayout.Button("クリア", GUILayout.MaxWidth(120))) { Clear(); }
             EditorGUILayout.EndHorizontal();
-
             EditorGUI.EndDisabledGroup();
+
+            // 情報ウィンドウ
+            DrawInformation();
         }
 
         private IEnumerator Execute()

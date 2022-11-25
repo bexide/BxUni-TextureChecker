@@ -1,26 +1,16 @@
 // 2022-11-24 BeXide,Inc.
 // by Y.Hayashi
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
 namespace BX.TextureChecker
 {
-    [Serializable]
-    public class AssetObject
-    {
-        public GUID          m_asset;
-        public string        m_objectPath;
-        public HierarchyPath m_objectHierarchy;
-    }
-
     /// <summary>
     /// TextureCheckerの設定を保存するアセット
     /// </summary>
-    public class TextureCheckerSettings : ScriptableObject
+    internal class TextureCheckerSettings : ScriptableObject, ISerializationCallbackReceiver
     {
         /// <summary>
         /// デフォルトの検査対象パス
@@ -44,21 +34,51 @@ namespace BX.TextureChecker
         /// <summary>
         /// 無視するアセット／オブジェクトのリスト
         /// </summary>
-        [SerializeField]
-        private List<AssetObject> m_ignoreAssetObjectList;
+        private HashSet<AssetObject> m_ignoreAssetObjectSet = new();
 
-        public IReadOnlyList<AssetObject> IgnoreAssetObjectList => m_ignoreAssetObjectList;
+        public HashSet<AssetObject> IgnoreAssetObjectSet => m_ignoreAssetObjectSet;
 
         public void AddIgnoreAssetObject(AssetObject assetObject)
         {
-            m_ignoreAssetObjectList.Add(assetObject);
+            m_ignoreAssetObjectSet.Add(assetObject);
             EditorUtility.SetDirty(this);
         }
 
         public void RemoveIgnoreAssetObject(AssetObject assetObject)
         {
-            m_ignoreAssetObjectList.Remove(assetObject);
+            m_ignoreAssetObjectSet.Remove(assetObject);
             EditorUtility.SetDirty(this);
         }
+
+        public void SetIgnoreAssetObject(AssetObject assetObject, bool active)
+        {
+            if (active)
+            {
+                AddIgnoreAssetObject(assetObject);
+            }
+            else
+            {
+                RemoveIgnoreAssetObject(assetObject);
+            }
+        }
+
+        #region Serializer
+
+        [SerializeField]
+        private List<AssetObject> m_ignoreAssetObjectList = new();
+
+        public void OnBeforeSerialize()
+        {
+            m_ignoreAssetObjectList.Clear();
+            m_ignoreAssetObjectList = new(m_ignoreAssetObjectSet);
+        }
+
+        public void OnAfterDeserialize()
+        {
+            m_ignoreAssetObjectSet.Clear();
+            foreach (var item in m_ignoreAssetObjectList) { m_ignoreAssetObjectSet.Add(item); }
+        }
+
+        #endregion
     }
 }

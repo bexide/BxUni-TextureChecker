@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 942fe705ff6d84e468cd14e48f0424ac, type: 3}
   m_Name: BxTextureChecker_TextureCompressionChecker
   m_EditorClassIdentifier: 
-  m_targetFolder: {fileID: 102900000, guid: e4198baea807abe4dbaf2240364d6093, type: 3}
+  m_targetFolder: {fileID: 0}
   m_ignoreAssetObjectList: []

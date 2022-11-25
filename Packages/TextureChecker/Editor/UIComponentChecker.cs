@@ -16,7 +16,7 @@ namespace BX.TextureChecker
     /// <summary>
     /// コンポーネントの設定をチェックする機能のテンプレート
     /// </summary>
-    public abstract class UIComponentChecker : TextureCheckerBase
+    internal abstract class UIComponentChecker : TextureCheckerBase
     {
         // GUI表示内部情報
         protected enum TargetMode
@@ -73,6 +73,7 @@ namespace BX.TextureChecker
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("チェック", GUILayout.MaxWidth(120)))
             {
+                PreExecute();
                 EditorCoroutineUtility.StartCoroutine(Execute(), this);
             }
 
@@ -84,10 +85,13 @@ namespace BX.TextureChecker
             DrawInformation();
         }
 
-        protected virtual IEnumerator Execute()
+        private void PreExecute()
         {
             InformationList = new List<InformationEntry>();
-
+        }
+        
+        protected virtual IEnumerator Execute()
+        {
             switch ((TargetMode)m_mode)
             {
             case TargetMode.Prefab:

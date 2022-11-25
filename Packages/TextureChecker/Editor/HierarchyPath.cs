@@ -18,13 +18,19 @@ namespace BX.TextureChecker
         [Serializable]
         public class NodeEntry
         {
-            public string NodeName     { get; }
-            public int    SiblingIndex { get; }
+            [SerializeField]
+            private string m_nodeName;
+
+            [SerializeField]
+            private int m_siblingIndex;
+
+            public string NodeName     => m_nodeName;
+            public int    SiblingIndex => m_siblingIndex;
 
             public NodeEntry(Transform transform)
             {
-                NodeName     = transform.name;
-                SiblingIndex = transform.GetSiblingIndex();
+                m_nodeName     = transform.name;
+                m_siblingIndex = transform.GetSiblingIndex();
             }
 
             public bool IsMatch(Transform transform)
@@ -32,18 +38,59 @@ namespace BX.TextureChecker
                 return NodeName == transform.name &&
                        SiblingIndex == transform.GetSiblingIndex();
             }
+            
+            #region Equality
+
+            public override int GetHashCode()
+            {
+                return NodeName.GetHashCode() ^ SiblingIndex.GetHashCode();
+            }
+        
+            public override bool Equals(object obj)
+            {
+                return obj is NodeEntry nodeEntry && Equals(nodeEntry);
+            }
+
+            private bool Equals(NodeEntry rhv)
+            {
+                return NodeName == rhv.NodeName && SiblingIndex == rhv.SiblingIndex;
+            }
+
+            public static bool operator ==(NodeEntry lhv, NodeEntry rhv)
+            {
+                System.Object lho = lhv;
+                System.Object rho = rhv;
+
+                bool lNull = lho == null;
+                bool rNull = rho == null;
+
+                if (lNull && rNull) { return true; }
+                if (lNull || rNull) { return false; }
+                
+                return lhv.Equals(rhv);
+            }
+
+            public static bool operator !=(NodeEntry lhv, NodeEntry rhv)
+            {
+                return !(lhv == rhv);
+            }
+
+            #endregion
         }
 
-        private NodeEntry[] NodeEntries { get; }
+        [SerializeField]
+        private List<NodeEntry> m_nodeEntries;
+
+        private List<NodeEntry> NodeEntries => m_nodeEntries;
 
         public HierarchyPath(IEnumerable<NodeEntry> entries)
         {
-            NodeEntries = entries.ToArray();
+            m_nodeEntries = entries.ToList();
         }
 
         public GameObject GetGameObject()
         {
-            if (NodeEntries == null || NodeEntries.Length <= 0) { return null; }
+            if (NodeEntries == null || NodeEntries.Count <= 0) { return null; }
 
             Transform currentNode = null;
             foreach (var entry in NodeEntries)
@@ -119,8 +166,46 @@ namespace BX.TextureChecker
         public override string ToString()
         {
             if (NodeEntries == null ||
-                NodeEntries.Length <= 0) { return string.Empty; }
+                NodeEntries.Count <= 0) { return string.Empty; }
             return NodeEntries[^1].NodeName;
         }
+        
+        #region Equality
+
+        public override int GetHashCode()
+        {
+            return NodeEntries.Aggregate(0, (hash, next) => hash ^ next.GetHashCode());
+        }
+        
+        public override bool Equals(object obj)
+        {
+            return obj is HierarchyPath hierarchyPath && Equals(hierarchyPath);
+        }
+
+        private bool Equals(HierarchyPath rhv)
+        {
+            return GetHashCode() == rhv.GetHashCode();
+        }
+
+        public static bool operator ==(HierarchyPath lhv, HierarchyPath rhv)
+        {
+            System.Object lho = lhv;
+            System.Object rho = rhv;
+
+            bool lNull = lho == null || lhv.NodeEntries.Count <= 0;
+            bool rNull = rho == null || rhv.NodeEntries.Count <= 0;
+
+            if (lNull && rNull) { return true; }
+            if (lNull || rNull) { return false; }
+                
+            return lhv.Equals(rhv);
+        }
+
+        public static bool operator !=(HierarchyPath lhv, HierarchyPath rhv)
+        {
+            return !(lhv == rhv);
+        }
+
+        #endregion
     }
 }

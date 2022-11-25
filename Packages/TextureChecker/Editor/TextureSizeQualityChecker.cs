@@ -12,7 +12,7 @@ using Unity.Mathematics;
 
 namespace BX.TextureChecker
 {
-    public class TextureSizeQualityChecker : TextureCheckerBase
+    internal class TextureSizeQualityChecker : TextureCheckerBase
     {
         static readonly string s_hpfShaderName = "Unlit/Highpass3x3";
 
@@ -110,11 +110,10 @@ namespace BX.TextureChecker
             DrawInformation();
         }
 
-        private void Clear()
+        protected override void Clear()
         {
-            InformationList = null;
-            CheckResults    = null;
-            IsCompleted     = false;
+            base.Clear();
+            CheckResults = null;
         }
 
         private IEnumerator Execute()
@@ -135,7 +134,7 @@ namespace BX.TextureChecker
 
             string[] guids = AssetDatabase.FindAssets(
                 "t:Texture2D",
-                new string[] { targetPath });
+                new [] { targetPath });
             if (guids.Length <= 0) { yield break; }
 
             int guidsLength = guids.Length;
@@ -245,7 +244,7 @@ namespace BX.TextureChecker
                     });
             }
 
-            yield break;
+            //yield break;
         }
 
         private Texture2D GetFilteredImage(Texture2D texture)

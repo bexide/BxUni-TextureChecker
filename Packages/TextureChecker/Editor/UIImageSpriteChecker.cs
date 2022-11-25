@@ -12,7 +12,7 @@ namespace BX.TextureChecker
     /// ImageのRectのサイズがSpriteのサイズと一致しているかを検証する
     /// TightPackingされたSpriteAtlasに登録されているSpriteを使うImageにUseSpriteMeshが設定されているかを検証する
     /// </summary>
-    public class UIImageSpriteChecker : UIComponentChecker
+    internal class UIImageSpriteChecker : UIComponentChecker
     {
         [MenuItem("BeXide/UI Checker/UI Image Sprite Size Check")]
         private static void Create()

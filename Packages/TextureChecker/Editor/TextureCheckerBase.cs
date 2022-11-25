@@ -15,7 +15,7 @@ using UnityEditor.U2D;
 
 namespace BX.TextureChecker
 {
-    public abstract class TextureCheckerBase : EditorWindow
+    internal abstract class TextureCheckerBase : EditorWindow
     {
         protected static readonly string s_defaultPath = "Assets/Application";
 
@@ -53,19 +53,23 @@ namespace BX.TextureChecker
             public string          ObjectPath    { get; }
             public HierarchyPath   HierarchyPath { get; }
             public string          Text          { get; }
+            public bool            Ignore        { get; }
+            public bool            NewIgnore     { get; set; }
 
             public InformationEntry(
                 InformationType type,
                 GUID            assetGuid,
                 string          objectPath,
                 HierarchyPath   hierarchyPath,
-                string          text)
+                string          text,
+                bool            ignore)
             {
                 Type          = type;
                 AssetGuid     = assetGuid;
                 ObjectPath    = objectPath;
                 HierarchyPath = hierarchyPath;
                 Text          = text;
+                Ignore        = NewIgnore = ignore;
             }
 
             public string GetObjectString()
@@ -102,13 +106,17 @@ namespace BX.TextureChecker
             InformationType type,
             string          message)
         {
+            bool ignore = Settings.IgnoreAssetObjectSet.Contains(
+                new AssetObject(assetPath, objectPath, hierarchyPath));
+            
             InformationList.Add(
                 new InformationEntry(
                     type,
                     assetPath,
                     objectPath,
                     hierarchyPath,
-                    message));
+                    message,
+                    ignore));
         }
 
         protected void AddInformationLog(string objectPath, string message)
@@ -218,7 +226,8 @@ namespace BX.TextureChecker
             {
                 new MultiColumnHeaderState.Column()
                 {
-                    width = 16,
+                    width      = 16,
+                    autoResize = false,
                 },
                 new MultiColumnHeaderState.Column()
                 {
@@ -233,6 +242,13 @@ namespace BX.TextureChecker
                     width               = 100,
                     autoResize          = true,
                     headerTextAlignment = TextAlignment.Left
+                },
+                new MultiColumnHeaderState.Column()
+                {
+                    headerContent       = new GUIContent("Ignore"),
+                    width               = 16,
+                    autoResize          = false,
+                    headerTextAlignment = TextAlignment.Center
                 },
                 new MultiColumnHeaderState.Column()
                 {
@@ -379,9 +395,20 @@ namespace BX.TextureChecker
                     EditorGUIUtility.PingObject(instanceId);
                 }
 
+                bool newIgnore = EditorGUILayout.Toggle(
+                    info.NewIgnore,
+                    GUILayout.Width(m_columnHeader.GetColumnRect(3).width-2));
+                if (newIgnore != info.NewIgnore)
+                {
+                    Settings.SetIgnoreAssetObject(
+                        new AssetObject(info.AssetGuid, info.ObjectPath, info.HierarchyPath),
+                        newIgnore);
+                    info.NewIgnore = newIgnore;
+                }
+
                 EditorGUILayout.LabelField(
                     info.Text,
-                    GUILayout.Width(m_columnHeader.GetColumnRect(3).width-2));
+                    GUILayout.Width(m_columnHeader.GetColumnRect(4).width-2));
 
                 EditorGUILayout.EndHorizontal();
             }
@@ -398,7 +425,7 @@ namespace BX.TextureChecker
             EditorGUILayout.EndScrollView();
         }
 
-        protected void Clear()
+        protected virtual void Clear()
         {
             InformationList = null;
             IsCompleted     = false;
