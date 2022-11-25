@@ -46,11 +46,6 @@ namespace BX.TextureChecker
             window.Initialize("TextureCompressionChecker");
         }
 
-        private Vector2 m_informationScrollPosition;
-
-        //private       int m_viewIndex = 0;
-        private const int k_pageViews = 100;
-
         /// <summary>
         /// ウィンドウ表示
         /// </summary>

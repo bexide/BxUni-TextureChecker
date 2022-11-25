@@ -347,13 +347,20 @@ namespace BX.TextureChecker
                 false,
                 false);
 
-            if (m_viewIndex > 0 &&
-                GUILayout.Button(
-                    "前のページ",
-                    GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.5f)))
+            EditorGUILayout.BeginHorizontal();
+            int maxPage     = (InformationList.Count - 1) / k_pageViews + 1;
+            int curPage     = (m_viewIndex / k_pageViews) + 1;
+            var pageContent = new GUIContent($"Page {curPage}/{maxPage}");
+            float pageWidth = EditorStyles.label.CalcSize(pageContent).x;
+            EditorGUILayout.LabelField(pageContent, GUILayout.Width(pageWidth));
+            EditorGUI.BeginDisabledGroup(m_viewIndex <= 0);
+            if (GUILayout.Button("前のページ", GUILayout.MaxWidth(200)))
             {
                 m_viewIndex -= k_pageViews;
             }
+            EditorGUI.EndDisabledGroup();
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
 
             bool even = false;
             for (int i = m_viewIndex;
@@ -413,14 +420,13 @@ namespace BX.TextureChecker
                 EditorGUILayout.EndHorizontal();
             }
 
-            if (m_viewIndex + k_pageViews < InformationList.Count &&
-                GUILayout.Button(
-                    "次のページ",
-                    GUILayout.MaxWidth(EditorGUIUtility.currentViewWidth * 0.5f)))
+            EditorGUI.BeginDisabledGroup(m_viewIndex + k_pageViews >= InformationList.Count);
+            if (GUILayout.Button("次のページ", GUILayout.MaxWidth(200)))
             {
                 m_viewIndex                 += k_pageViews;
                 m_informationScrollPosition =  Vector2.zero;
             }
+            EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.EndScrollView();
         }
