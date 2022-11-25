@@ -6,7 +6,6 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using GluonGui.WorkspaceWindow.Views.WorkspaceExplorer;
 using UnityEngine;
 using UnityEngine.U2D;
 
@@ -91,10 +90,20 @@ namespace BX.TextureChecker
             }
         }
 
-        protected GUID CurrentAsset  { get; set; }
+        protected GUID CurrentAsset { get; set; }
 
-        protected List<InformationEntry> InformationList { get; set; }
-        protected bool                   IsCompleted     { get; set; }
+        protected List<InformationEntry> InformationList { get; } = new();
+
+        protected bool IsCompleted    { get; set; }
+        protected bool HasInformation => InformationList.Count > 0;
+
+        protected List<InformationEntry> DisplayList { get; } = new();
+
+        protected void ClearInformation()
+        {
+            InformationList.Clear();
+            DisplayList.Clear();
+        }
 
         /// <summary>
         /// 情報エントリを追加
@@ -113,7 +122,7 @@ namespace BX.TextureChecker
         {
             bool ignore = Settings.IgnoreAssetObjectSet.Contains(
                 new AssetObject(assetPath, objectPath, hierarchyPath));
-            
+
             InformationList.Add(
                 new InformationEntry(
                     type,
@@ -221,7 +230,7 @@ namespace BX.TextureChecker
                 Directory.CreateDirectory(directory);
             }
         }
-            
+
         /// <summary>
         /// マルチカラムヘッダ初期化
         /// </summary>
@@ -285,7 +294,8 @@ namespace BX.TextureChecker
                 logBgOdd = EditorGUIUtility.Load(
                     "builtin skins/darkskin/images/cn entrybackodd.png") as Texture2D;
                 logBgEven
-                    = EditorGUIUtility.Load("builtin skins/darkskin/images/cnentrybackeven.png") as
+                    = EditorGUIUtility.Load(
+                            "builtin skins/darkskin/images/cnentrybackeven.png") as
                         Texture2D;
                 logBgSelected
                     = EditorGUIUtility.Load("builtin skins/darkskin/images/menuitemhover.png")
@@ -297,7 +307,8 @@ namespace BX.TextureChecker
                 logBgOdd = EditorGUIUtility.Load(
                     "builtin skins/lightskin/images/cn entrybackodd.png") as Texture2D;
                 logBgEven
-                    = EditorGUIUtility.Load("builtin skins/lightskin/images/cnentrybackeven.png") as
+                    = EditorGUIUtility.Load(
+                            "builtin skins/lightskin/images/cnentrybackeven.png") as
                         Texture2D;
                 logBgSelected
                     = EditorGUIUtility.Load("builtin skins/lightskin/images/menuitemhover.png")
@@ -331,7 +342,7 @@ namespace BX.TextureChecker
         protected void DrawInformation()
         {
             // 情報ウィンドウ
-            if (InformationList == null || !IsCompleted) { return; }
+            if (!IsCompleted) { return; }
 
             m_informationScrollPosition = EditorGUILayout.BeginScrollView(
                 m_informationScrollPosition,
@@ -346,7 +357,7 @@ namespace BX.TextureChecker
 
             EditorGUILayout.Space(4);
 
-            if (InformationList.Count == 0)
+            if (DisplayList.Count == 0)
             {
                 EditorGUILayout.HelpBox("見つかりませんでした。", MessageType.Warning);
                 EditorGUILayout.EndScrollView();
@@ -354,10 +365,10 @@ namespace BX.TextureChecker
             }
 
             EditorGUILayout.BeginHorizontal();
-            int maxPage     = (InformationList.Count - 1) / k_pageViews + 1;
-            int curPage     = (m_viewIndex / k_pageViews) + 1;
-            var pageContent = new GUIContent($"Page {curPage}/{maxPage}");
-            float pageWidth = EditorStyles.label.CalcSize(pageContent).x;
+            int   maxPage     = (DisplayList.Count - 1) / k_pageViews + 1;
+            int   curPage     = (m_viewIndex / k_pageViews) + 1;
+            var   pageContent = new GUIContent($"Page {curPage}/{maxPage}");
+            float pageWidth   = EditorStyles.label.CalcSize(pageContent).x;
             EditorGUILayout.LabelField(pageContent, GUILayout.Width(pageWidth));
             EditorGUI.BeginDisabledGroup(m_viewIndex <= 0);
             if (GUILayout.Button("前のページ", GUILayout.MaxWidth(200)))
@@ -370,30 +381,33 @@ namespace BX.TextureChecker
             {
                 m_cachedPosition1 = GUILayoutUtility.GetLastRect().xMax;
             }
-            float currentPosition = m_cachedPosition1; 
             float ignorePosition = Enumerable.Range(0, 3)
                 .Select(i => m_columnHeader.GetColumnRect(i).width)
                 .Sum();
-            GUILayoutUtility.GetRect(ignorePosition - currentPosition, 1);
+            GUILayoutUtility.GetRect(ignorePosition - m_cachedPosition1, 1);
 
-            m_showIgnoreAssets = EditorGUILayout.ToggleLeft("無視を表示", m_showIgnoreAssets);
+            bool showIgnore = EditorGUILayout.ToggleLeft("無視を表示", m_showIgnoreAssets);
+            if (showIgnore != m_showIgnoreAssets)
+            {
+                m_showIgnoreAssets = showIgnore;
+                UpdateDisplayList();
+                return;
+            }
             GUILayout.FlexibleSpace();
 
             EditorGUILayout.EndHorizontal();
 
             //bool even = false;
             for (int i = m_viewIndex;
-                 i < Math.Min(m_viewIndex + k_pageViews, InformationList.Count);
+                 i < Math.Min(m_viewIndex + k_pageViews, DisplayList.Count);
                  i++)
             {
-                var info = InformationList[i];
+                var info = DisplayList[i];
 
-                EditorGUI.BeginDisabledGroup(!m_showIgnoreAssets && info.Ignore);
-                
                 var icon =
                     info.Type == InformationType.Info    ? m_infoIconSmall :
                     info.Type == InformationType.Warning ? m_warningIconSmall :
-                                                             m_errorIconSmall;
+                                                           m_errorIconSmall;
 
                 //var logStyle = even ? m_logStyleOdd : m_logStyleEven;
                 //even = !even;
@@ -402,13 +416,13 @@ namespace BX.TextureChecker
 
                 EditorGUILayout.LabelField(
                     new GUIContent(icon),
-                    GUILayout.Width(m_columnHeader.GetColumnRect(0).width-2));
+                    GUILayout.Width(m_columnHeader.GetColumnRect(0).width - 2));
 
                 string assetPath = AssetDatabase.GUIDToAssetPath(info.AssetGuid);
                 if (GUILayout.Button(
                         assetPath,
                         EditorStyles.objectField,
-                        GUILayout.Width(m_columnHeader.GetColumnRect(1).width-2)))
+                        GUILayout.Width(m_columnHeader.GetColumnRect(1).width - 2)))
                 {
                     var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
                     EditorGUIUtility.PingObject(obj);
@@ -417,47 +431,66 @@ namespace BX.TextureChecker
                 if (GUILayout.Button(
                         info.GetObjectString(),
                         EditorStyles.objectField,
-                        GUILayout.Width(m_columnHeader.GetColumnRect(2).width-2)))
+                        GUILayout.Width(m_columnHeader.GetColumnRect(2).width - 2)))
                 {
                     int instanceId = info.GetObjectInstanceId();
-                    Selection.activeInstanceID = instanceId; 
+                    Selection.activeInstanceID = instanceId;
                     EditorGUIUtility.PingObject(instanceId);
                 }
 
                 bool currentIgnore = info.NewIgnore ?? info.Ignore;
                 bool newIgnore = EditorGUILayout.Toggle(
                     currentIgnore,
-                    GUILayout.Width(m_columnHeader.GetColumnRect(3).width-2));
-                if (newIgnore != currentIgnore)
-                {
-                    info.NewIgnore = newIgnore;
-                }
+                    GUILayout.Width(m_columnHeader.GetColumnRect(3).width - 2));
+                if (newIgnore != currentIgnore) { info.NewIgnore = newIgnore; }
 
                 EditorGUILayout.LabelField(
                     info.Text,
-                    GUILayout.Width(m_columnHeader.GetColumnRect(4).width-2));
+                    GUILayout.Width(m_columnHeader.GetColumnRect(4).width - 2));
 
                 EditorGUILayout.EndHorizontal();
-                
-                EditorGUI.EndDisabledGroup();
             }
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUI.BeginDisabledGroup(m_viewIndex + k_pageViews >= InformationList.Count);
+            EditorGUILayout.LabelField(pageContent, GUILayout.Width(pageWidth));
+            EditorGUI.BeginDisabledGroup(m_viewIndex + k_pageViews >= DisplayList.Count);
             if (GUILayout.Button("次のページ", GUILayout.MaxWidth(200)))
             {
                 m_viewIndex                 += k_pageViews;
                 m_informationScrollPosition =  Vector2.zero;
             }
             EditorGUI.EndDisabledGroup();
+            GUILayoutUtility.GetRect(ignorePosition - m_cachedPosition1, 1);
+            if (GUILayout.Button("無視フラグ保存", GUILayout.MaxWidth(200))) { SaveIgnoreFlags(); }
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("無視フラグ保存", GUILayout.MaxWidth(200)))
-            {
-                SaveIgnoreFlags();
-            }
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.EndScrollView();
+        }
+
+        /// <summary>
+        /// InformationListが完成したときの処理
+        /// </summary>
+        protected void Complete()
+        {
+            IsCompleted = true;
+            UpdateDisplayList();
+        }
+
+        protected void UpdateDisplayList()
+        {
+            DisplayList.Clear();
+            if (m_showIgnoreAssets)
+            {
+                foreach (var info in InformationList) { DisplayList.Add(info); }
+            }
+            else
+            {
+                foreach (var info in InformationList)
+                {
+                    if (!info.Ignore) { DisplayList.Add(info); }
+                }
+            }
         }
 
         /// <summary>
@@ -465,7 +498,7 @@ namespace BX.TextureChecker
         /// </summary>
         private void SaveIgnoreFlags()
         {
-            foreach (var info in InformationList)
+            foreach (var info in DisplayList)
             {
                 if (info.NewIgnore is { } ignore)
                 {
@@ -476,12 +509,13 @@ namespace BX.TextureChecker
                     EditorUtility.SetDirty(Settings);
                 }
             }
+            UpdateDisplayList();
         }
 
         protected virtual void Clear()
         {
-            InformationList = null;
-            IsCompleted     = false;
+            ClearInformation();
+            IsCompleted = false;
         }
 
         /// <summary>
@@ -545,10 +579,7 @@ namespace BX.TextureChecker
         {
             var  packingSettings    = spriteAtlas.GetPackingSettings();
             bool enableTightPacking = packingSettings.enableTightPacking;
-            if (!enableTightPacking)
-            {
-                AddInformationWarning("TightPackingではないSpriteAtlasです");
-            }
+            if (!enableTightPacking) { AddInformationWarning("TightPackingではないSpriteAtlasです"); }
 
             var serializedObject = new SerializedObject(spriteAtlas);
             var sizeProp         = serializedObject.FindProperty("m_PackedSprites.Array.size");

@@ -63,7 +63,7 @@ namespace BX.TextureChecker
                 new GUIStyle(EditorStyles.radioButton));
             EditorGUILayout.EndHorizontal();
 
-            if (InformationList == null)
+            if (!IsCompleted)
             {
                 EditorGUILayout.HelpBox(
                     "チェックを開始するには下のチェックボタンを押してください。",
@@ -77,7 +77,7 @@ namespace BX.TextureChecker
                 EditorCoroutineUtility.StartCoroutine(Execute(), this);
             }
 
-            EditorGUI.BeginDisabledGroup(InformationList == null);
+            EditorGUI.BeginDisabledGroup(!HasInformation);
             if (GUILayout.Button("クリア", GUILayout.MaxWidth(120))) { Clear(); }
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
@@ -87,7 +87,7 @@ namespace BX.TextureChecker
 
         private void PreExecute()
         {
-            InformationList = new List<InformationEntry>();
+            ClearInformation();
         }
         
         protected virtual IEnumerator Execute()
@@ -108,7 +108,7 @@ namespace BX.TextureChecker
                 break;
             }
 
-            IsCompleted = true;
+            Complete();
         }
 
         private IEnumerator CheckPrefabs()

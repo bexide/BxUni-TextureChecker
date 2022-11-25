@@ -67,7 +67,7 @@ namespace BX.TextureChecker
                     allowSceneObjects: false);
             Settings.TargetFolder = newTarget as DefaultAsset;
 
-            if (InformationList == null)
+            if (!IsCompleted)
             {
                 EditorGUILayout.HelpBox(
                     "チェックを開始するには下のチェックボタンを押してください。",
@@ -80,7 +80,7 @@ namespace BX.TextureChecker
                 EditorCoroutineUtility.StartCoroutine(Execute(), this);
             }
 
-            EditorGUI.BeginDisabledGroup(InformationList == null);
+            EditorGUI.BeginDisabledGroup(!HasInformation);
             if (GUILayout.Button("クリア", GUILayout.MaxWidth(120))) { Clear(); }
             EditorGUILayout.EndHorizontal();
             EditorGUI.EndDisabledGroup();
@@ -91,12 +91,10 @@ namespace BX.TextureChecker
 
         private IEnumerator Execute()
         {
-            InformationList = new List<InformationEntry>();
-
             yield return CollectSpriteAtlas();
             yield return CheckTexture2D();
 
-            IsCompleted = true;
+            Complete();
         }
 
         private IEnumerator CheckTexture2D()

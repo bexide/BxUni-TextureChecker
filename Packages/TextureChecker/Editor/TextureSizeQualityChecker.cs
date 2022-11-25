@@ -77,7 +77,7 @@ namespace BX.TextureChecker
 
             ResultThreshold = EditorGUILayout.Slider("結果しきい値", ResultThreshold, 0f, 5f);
 
-            if (InformationList == null)
+            if (!IsCompleted)
             {
                 EditorGUILayout.HelpBox(
                     "チェックを開始するには下のチェックボタンを押してください。",
@@ -90,7 +90,7 @@ namespace BX.TextureChecker
                 EditorCoroutineUtility.StartCoroutine(Execute(), this);
             }
 
-            EditorGUI.BeginDisabledGroup(InformationList == null);
+            EditorGUI.BeginDisabledGroup(!HasInformation);
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("クリア", GUILayout.MaxWidth(120))) { Clear(); }
             if (GUILayout.Button("保存", GUILayout.MaxWidth(120))) { Save(); }
@@ -118,12 +118,11 @@ namespace BX.TextureChecker
 
         private IEnumerator Execute()
         {
-            InformationList = new List<InformationEntry>();
-            CheckResults    = new List<CheckResultType>();
+            CheckResults = new List<CheckResultType>();
 
             yield return CheckTexture2D();
 
-            IsCompleted = true;
+            Complete();
         }
 
         private IEnumerator CheckTexture2D()
@@ -179,7 +178,7 @@ namespace BX.TextureChecker
 
         private void ChangeSortType()
         {
-            InformationList.Clear();
+            ClearInformation();
             IOrderedEnumerable<CheckResultType> results;
             switch (SortTypeIndex)
             {
