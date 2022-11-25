@@ -41,7 +41,7 @@ namespace BX.TextureChecker
         private const int k_pageViews = 100;
 
         private float m_cachedPosition1;
-        private bool  m_showIgnoreAssets = true;
+        private bool  m_showIgnoreAssets;
 
         /// <summary>設定</summary>
         protected TextureCheckerSettings Settings { get; set; }
@@ -275,6 +275,16 @@ namespace BX.TextureChecker
             m_columnHeader
                 = new MultiColumnHeader(new MultiColumnHeaderState(m_columns)) { height = 25 };
             m_columnHeader.ResizeToFit();
+            m_columnHeader.sortingChanged += OnSortingChanged;
+        }
+
+        /// <summary>
+        /// ソートカラム変更
+        /// </summary>
+        /// <param name="columnHeader"></param>
+        private void OnSortingChanged(MultiColumnHeader columnHeader)
+        {
+            UpdateDisplayList();
         }
 
         /// <summary>
@@ -480,16 +490,57 @@ namespace BX.TextureChecker
         protected void UpdateDisplayList()
         {
             DisplayList.Clear();
+            var sortedInformation = GetSortedInformationList();
             if (m_showIgnoreAssets)
             {
-                foreach (var info in InformationList) { DisplayList.Add(info); }
+                foreach (var info in sortedInformation) { DisplayList.Add(info); }
             }
             else
             {
-                foreach (var info in InformationList)
+                foreach (var info in sortedInformation.Where(info => !info.Ignore))
                 {
-                    if (!info.Ignore) { DisplayList.Add(info); }
+                    DisplayList.Add(info);
                 }
+            }
+        }
+
+        protected IEnumerable<InformationEntry> GetSortedInformationList()
+        {
+            int[] sortedColumns = m_columnHeader.state.sortedColumns;
+            if (m_columnHeader.sortedColumnIndex < 0 ||
+                sortedColumns.Length == 0) { return InformationList; }
+
+            IOrderedEnumerable<InformationEntry> sortedInformation = null;
+            foreach (int columnIndex in sortedColumns)
+            {
+                bool isAscending = m_columnHeader.IsSortedAscending(columnIndex);
+                var  selector    = GetSelector(columnIndex);
+
+                if (sortedInformation == null)
+                {
+                    sortedInformation = isAscending
+                        ? InformationList.OrderBy(selector)
+                        : InformationList.OrderByDescending(selector);
+                }
+                else
+                {
+                    sortedInformation = isAscending
+                        ? sortedInformation.ThenBy(selector)
+                        : sortedInformation.ThenByDescending(selector);
+                }
+            }
+
+            return sortedInformation;
+
+            Func<InformationEntry, string> GetSelector(int columnIndex)
+            {
+                return columnIndex switch
+                {
+                    1 => info => AssetDatabase.GUIDToAssetPath(info.AssetGuid),
+                    2 => info => info.GetObjectString(),
+                    4 => info => info.Text,
+                    _ => info => string.Empty
+                };
             }
         }
 
