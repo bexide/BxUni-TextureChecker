@@ -472,6 +472,7 @@ namespace BX.TextureChecker
             EditorGUI.EndDisabledGroup();
             GUILayoutUtility.GetRect(ignorePosition - m_cachedPosition1, 1);
             if (GUILayout.Button("無視フラグ保存", GUILayout.MaxWidth(200))) { SaveIgnoreFlags(); }
+            if (GUILayout.Button("無視フラグクリア", GUILayout.MaxWidth(200))) { ClearIgnoreFlags(); }
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
@@ -557,9 +558,25 @@ namespace BX.TextureChecker
                     Settings.SetIgnoreAssetObject(
                         new AssetObject(info.AssetGuid, info.ObjectPath, info.HierarchyPath),
                         ignore);
-                    EditorUtility.SetDirty(Settings);
+                    info.NewIgnore = null;
                 }
             }
+            EditorUtility.SetDirty(Settings);
+            UpdateDisplayList();
+        }
+
+        /// <summary>
+        /// 全ての無視フラグをクリア
+        /// </summary>
+        private void ClearIgnoreFlags()
+        {
+            Settings.ClearIgnoreAssetObjectSet();
+            foreach (var info in InformationList)
+            {
+                info.Ignore    = false;
+                info.NewIgnore = null;
+            }
+            EditorUtility.SetDirty(Settings);
             UpdateDisplayList();
         }
 

@@ -50,6 +50,11 @@ namespace BX.TextureChecker
             }
         }
 
+        public void ClearIgnoreAssetObjectSet()
+        {
+            m_ignoreAssetObjectSet.Clear();
+        }
+
         #region Serializer
 
         [SerializeField]
