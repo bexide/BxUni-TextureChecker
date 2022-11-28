@@ -92,12 +92,13 @@ namespace BX.TextureChecker
 
         protected GUID CurrentAsset { get; set; }
 
-        protected List<InformationEntry> InformationList { get; } = new();
+        protected List<InformationEntry> InformationList { get; }
+            = new List<InformationEntry>();
 
         protected bool IsCompleted    { get; set; }
         protected bool HasInformation => InformationList.Count > 0;
 
-        protected List<InformationEntry> DisplayList { get; } = new();
+        protected List<InformationEntry> DisplayList { get; } = new List<InformationEntry>();
 
         protected void ClearInformation()
         {
@@ -592,7 +593,7 @@ namespace BX.TextureChecker
         /// <returns></returns>
         protected IEnumerator CollectSpriteAtlas()
         {
-            AtlasedTextureMap = new();
+            AtlasedTextureMap = new Dictionary<string, bool>();
 
             string targetPath = AssetDatabase.GetAssetPath(Settings.TargetFolder);
             if (string.IsNullOrEmpty(targetPath)) { targetPath = "Assets"; }

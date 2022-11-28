@@ -34,7 +34,7 @@ namespace BX.TextureChecker
         /// <summary>
         /// 無視するアセット／オブジェクトのリスト
         /// </summary>
-        private HashSet<AssetObject> m_ignoreAssetObjectSet = new();
+        private HashSet<AssetObject> m_ignoreAssetObjectSet = new HashSet<AssetObject>();
 
         public HashSet<AssetObject> IgnoreAssetObjectSet => m_ignoreAssetObjectSet;
 
@@ -58,12 +58,12 @@ namespace BX.TextureChecker
         #region Serializer
 
         [SerializeField]
-        private List<AssetObject> m_ignoreAssetObjectList = new();
+        private List<AssetObject> m_ignoreAssetObjectList = new List<AssetObject>();
 
         public void OnBeforeSerialize()
         {
             m_ignoreAssetObjectList.Clear();
-            m_ignoreAssetObjectList = new(m_ignoreAssetObjectSet);
+            m_ignoreAssetObjectList = new List<AssetObject>(m_ignoreAssetObjectSet);
         }
 
         public void OnAfterDeserialize()

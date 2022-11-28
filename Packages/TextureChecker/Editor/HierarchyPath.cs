@@ -4,8 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEditor.SceneManagement;
+using UnityEditor.Experimental.SceneManagement;
 
 namespace BX.TextureChecker
 {
@@ -167,7 +168,8 @@ namespace BX.TextureChecker
         {
             if (NodeEntries == null ||
                 NodeEntries.Count <= 0) { return string.Empty; }
-            return NodeEntries[^1].NodeName;
+            //return NodeEntries[^1].NodeName;
+            return NodeEntries.Last().NodeName;
         }
         
         #region Equality
