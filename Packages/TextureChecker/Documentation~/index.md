@@ -1,4 +1,4 @@
-# Texture Checker
+# BX Texture Checker
 
 テクスチャ設定を検査するエディタ拡張
 
@@ -73,3 +73,4 @@ UI要素について無駄なRaycastCheckが行われていないか検査しま
 - RaycastTargetは有効でそれを処理するコンポーネントも存在しますが、親のオブジェクトの
 RectTransformにこのオブジェクトのRectTransformが完全に包含されているため個別に処理する意味がありません。
 無駄を省くためにこのオブジェクトのRaycastTargetは外したほうがよいでしょう。
+
