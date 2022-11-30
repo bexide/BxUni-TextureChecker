@@ -46,13 +46,21 @@ namespace BX.TextureChecker
             window.Initialize("TextureCompressionChecker");
         }
 
+        protected override void Initialize(string id)
+        {
+            base.Initialize(id);
+            CodeTextMap["W101"] = "アトラスに登録されたテクスチャが圧縮されています";
+            CodeTextMap["W102"] = "独立したテクスチャが圧縮されていません";
+            CodeTextMap["W103"] = "独立したテクスチャの大きさがPOTではありません";
+        }
+
         /// <summary>
         /// ウィンドウ表示
         /// </summary>
         private void OnGUI()
         {
             EditorGUILayout.LabelField(
-                "これはテクスチャアセットについて，圧縮状態をチェックするツールです。",
+                "これはテクスチャアセットについて、圧縮状態をチェックするツールです",
                 new GUIStyle(GUI.skin.label)
                 {
                     wordWrap = true,
@@ -70,7 +78,7 @@ namespace BX.TextureChecker
             if (!IsCompleted)
             {
                 EditorGUILayout.HelpBox(
-                    "チェックを開始するには下のチェックボタンを押してください。",
+                    "チェックを開始するには下のチェックボタンを押してください",
                     MessageType.Info);
             }
 
@@ -160,8 +168,8 @@ namespace BX.TextureChecker
                             }
                         }
 
-                        AddInformationWarning(
-                            $"アトラスに登録されたテクスチャが圧縮されています。({string.Join(",", compressionMessage)})");
+                        //AddInformationWarning("W101", string.Join(",", compressionMessage));
+                        AddInformationWarning("W101");
                     }
                 }
                 else
@@ -170,11 +178,11 @@ namespace BX.TextureChecker
                             s => s.overridden
                                  && IsRawFormat(s.format, s.textureCompression)))
                     {
-                        AddInformationWarning("独立したテクスチャが圧縮されていません。");
+                        AddInformationWarning("W102");
                     }
                     else if (!isPOT)
                     {
-                        AddInformationWarning("独立したテクスチャの大きさがPOTではありません。");
+                        AddInformationWarning("W103");
                     }
                 }
 

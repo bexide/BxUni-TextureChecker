@@ -15,7 +15,7 @@ namespace BX.TextureChecker
         protected override string GetLabel() =>
             "これはUI.GraphicコンポーネントのRaycastTarget設定をチェックするツールです";
 
-        [MenuItem("BeXide/UI Checker/UI Raycast Status Check")]
+        [MenuItem("BeXide/Texture Checker/UI Raycast Status Check")]
         private static void Create()
         {
             var window =
@@ -24,6 +24,13 @@ namespace BX.TextureChecker
                     title: "UI Raycast Status Checker",
                     focus: true);
             window.Initialize("UIRaycastStatusChecker");
+        }
+
+        protected override void Initialize(string id)
+        {
+            base.Initialize(id);
+            CodeTextMap["W401"] = "EventHandlerに包含されないRaycastTargetが有効です";
+            CodeTextMap["W402"] = "親Rectに包含されているRaycastTargetが有効です";
         }
 
         protected override void CheckComponent(GameObject gameObject)
@@ -57,9 +64,7 @@ namespace BX.TextureChecker
             {
                 if (graphic.raycastTarget)
                 {
-                    AddInformationWarning(
-                        graphic.gameObject,
-                        "EventHandlerに包含されないRaycastTargetが有効です");
+                    AddInformationWarning(graphic.gameObject, "W401");
                 }
                 return;
             }
@@ -83,9 +88,7 @@ namespace BX.TextureChecker
             if (CornerContains(eventWorldCorners, rectWorldCorners) &&
                 graphic.raycastTarget)
             {
-                AddInformationWarning(
-                    graphic.gameObject,
-                    "親Rectに包含されているRaycastTargetが有効です");
+                AddInformationWarning(graphic.gameObject, "W402");
             }
 
             bool CornerContains(Vector3[] outerCorners, Vector3[] innerCorners)

@@ -19,11 +19,6 @@ namespace BX.TextureChecker
     {
         protected static readonly string s_defaultPath = "Assets/Application";
 
-        protected enum InformationType
-        {
-            Info, Warning, Error,
-        }
-
         // GUI表示内部情報
         //protected GUIStyle   m_logStyleOdd;
         //protected GUIStyle   m_logStyleEven;
@@ -53,6 +48,19 @@ namespace BX.TextureChecker
         protected Dictionary<string, bool> AtlasedTextureMap { get; set; }
 
         /// <summary>
+        /// 検査結果のログレベル
+        /// </summary>
+        protected enum InformationType
+        {
+            Info, Warning, Error,
+        }
+
+        /// <summary>
+        /// 検査結果のコードごとのテキスト
+        /// </summary>
+        protected Dictionary<string, string> CodeTextMap = new Dictionary<string, string>();
+
+        /// <summary>
         /// 検査結果のエントリ
         /// </summary>
         protected class InformationEntry
@@ -61,7 +69,7 @@ namespace BX.TextureChecker
             public GUID            AssetGuid     { get; }
             public string          ObjectPath    { get; }
             public HierarchyPath   HierarchyPath { get; }
-            public string          Text          { get; }
+            public string          Code          { get; }
             public bool            Ignore        { get; set; }
             public bool?           NewIgnore     { get; set; }
 
@@ -70,14 +78,14 @@ namespace BX.TextureChecker
                 GUID            assetGuid,
                 string          objectPath,
                 HierarchyPath   hierarchyPath,
-                string          text,
+                string          code,
                 bool            ignore)
             {
                 Type          = type;
                 AssetGuid     = assetGuid;
                 ObjectPath    = objectPath;
                 HierarchyPath = hierarchyPath;
-                Text          = text;
+                Code          = code;
                 Ignore        = ignore;
             }
 
@@ -148,13 +156,13 @@ namespace BX.TextureChecker
         /// <param name="objectPath">オブジェクト欄</param>
         /// <param name="hierarchyPath">オブジェクト欄</param>
         /// <param name="type">情報タイプ</param>
-        /// <param name="message">メッセージ文字列</param>
+        /// <param name="code">情報コード</param>
         private void AddInformation(
             GUID            assetPath,
             string          objectPath,
             HierarchyPath   hierarchyPath,
             InformationType type,
-            string          message)
+            string          code)
         {
             bool ignoreObject = Settings.IgnoreAssetObjectSet.Contains(
                 new AssetObject(assetPath, objectPath, hierarchyPath));
@@ -164,7 +172,7 @@ namespace BX.TextureChecker
                 assetPath,
                 objectPath,
                 hierarchyPath,
-                message,
+                code,
                 ignoreObject);
 
             InformationList.Add(entry);
@@ -177,64 +185,64 @@ namespace BX.TextureChecker
             }
         }
 
-        protected void AddInformationLog(string objectPath, string message)
+        protected void AddInformationLog(string objectPath, string code)
         {
-            AddInformation(CurrentAsset, objectPath, null, InformationType.Info, message);
+            AddInformation(CurrentAsset, objectPath, null, InformationType.Info, code);
         }
 
-        protected void AddInformationWarning(string objectPath, string message)
+        protected void AddInformationWarning(string objectPath, string code)
         {
-            AddInformation(CurrentAsset, objectPath, null, InformationType.Warning, message);
+            AddInformation(CurrentAsset, objectPath, null, InformationType.Warning, code);
         }
 
-        protected void AddInformationError(string objectPath, string message)
+        protected void AddInformationError(string objectPath, string code)
         {
-            AddInformation(CurrentAsset, objectPath, null, InformationType.Error, message);
+            AddInformation(CurrentAsset, objectPath, null, InformationType.Error, code);
         }
 
-        protected void AddInformationLog(GameObject gameObject, string message)
+        protected void AddInformationLog(GameObject gameObject, string code)
         {
             AddInformation(
                 CurrentAsset,
                 string.Empty,
                 HierarchyPath.Create(gameObject),
                 InformationType.Info,
-                message);
+                code);
         }
 
-        protected void AddInformationWarning(GameObject gameObject, string message)
+        protected void AddInformationWarning(GameObject gameObject, string code)
         {
             AddInformation(
                 CurrentAsset,
                 string.Empty,
                 HierarchyPath.Create(gameObject),
                 InformationType.Warning,
-                message);
+                code);
         }
 
-        protected void AddInformationError(GameObject gameObject, string message)
+        protected void AddInformationError(GameObject gameObject, string code)
         {
             AddInformation(
                 CurrentAsset,
                 string.Empty,
                 HierarchyPath.Create(gameObject),
                 InformationType.Error,
-                message);
+                code);
         }
 
-        protected void AddInformationLog(string message)
+        protected void AddInformationLog(string code)
         {
-            AddInformation(CurrentAsset, string.Empty, null, InformationType.Info, message);
+            AddInformation(CurrentAsset, string.Empty, null, InformationType.Info, code);
         }
 
-        protected void AddInformationWarning(string message)
+        protected void AddInformationWarning(string code)
         {
-            AddInformation(CurrentAsset, string.Empty, null, InformationType.Warning, message);
+            AddInformation(CurrentAsset, string.Empty, null, InformationType.Warning, code);
         }
 
-        protected void AddInformationError(string message)
+        protected void AddInformationError(string code)
         {
-            AddInformation(CurrentAsset, string.Empty, null, InformationType.Error, message);
+            AddInformation(CurrentAsset, string.Empty, null, InformationType.Error, code);
         }
 
         /// <summary>初期化</summary>
@@ -244,6 +252,7 @@ namespace BX.TextureChecker
             InitializeIcons();
             //InitializeLogStyle();
             InitializeMultiColumnHeader();
+            InitializeCodeTexts();
         }
 
         private void LoadSettings(string id)
@@ -381,6 +390,12 @@ namespace BX.TextureChecker
             m_errorIconContent   = new GUIContent(m_errorIconSmall);
             m_warningIconContent = new GUIContent(m_warningIconSmall);
             m_infoIconContent    = new GUIContent(m_infoIconSmall);
+        }
+
+        private void InitializeCodeTexts()
+        {
+            CodeTextMap["W001"] = "TightPackingではないSpriteAtlasです";
+            CodeTextMap["E001"] = "SpriteのSpriteAtlasへの登録が重複しています";
         }
 
         /// <summary>
@@ -552,7 +567,7 @@ namespace BX.TextureChecker
 
                     // Information Text Field
                     EditorGUILayout.LabelField(
-                        info.Text,
+                        CodeTextMap[info.Code],
                         GUILayout.Width(m_columnHeader.GetColumnRect(3).width - 2f));
 
                     EditorGUILayout.EndHorizontal();
@@ -638,7 +653,7 @@ namespace BX.TextureChecker
                 {
                     1 => info => AssetDatabase.GUIDToAssetPath(info.AssetGuid),
                     2 => info => info.GetObjectString(),
-                    4 => info => info.Text,
+                    4 => info => info.Code,
                     _ => info => string.Empty
                 };
             }
@@ -764,7 +779,7 @@ namespace BX.TextureChecker
         {
             var  packingSettings    = spriteAtlas.GetPackingSettings();
             bool enableTightPacking = packingSettings.enableTightPacking;
-            if (!enableTightPacking) { AddInformationWarning("TightPackingではないSpriteAtlasです"); }
+            if (!enableTightPacking) { AddInformationWarning("W001"); }
 
             var serializedObject = new SerializedObject(spriteAtlas);
             var sizeProp         = serializedObject.FindProperty("m_PackedSprites.Array.size");
@@ -786,9 +801,7 @@ namespace BX.TextureChecker
 
                     if (AtlasedTextureMap.TryGetValue(spriteGUID, out _))
                     {
-                        AddInformationError(
-                            spritePath,
-                            "SpriteのSpriteAtlasへの登録が重複しています");
+                        AddInformationError(spritePath, "E001");
                     }
                     else { AtlasedTextureMap[spriteGUID] = enableTightPacking; }
                 }

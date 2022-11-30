@@ -14,7 +14,7 @@ namespace BX.TextureChecker
     /// </summary>
     internal class UIImageSpriteChecker : UIComponentChecker
     {
-        [MenuItem("BeXide/UI Checker/UI Image Sprite Size Check")]
+        [MenuItem("BeXide/Texture Checker/UI Image Sprite Size Check")]
         private static void Create()
         {
             var window =
@@ -27,6 +27,14 @@ namespace BX.TextureChecker
 
         protected override string GetLabel() => "UI.Imageの設定をチェックします";
 
+        protected override void Initialize(string id)
+        {
+            base.Initialize(id);
+            CodeTextMap["E301"] = "ImageにSpriteが設定されていません";
+            CodeTextMap["W301"] = "RectサイズがSpriteサイズと一致しません";
+            CodeTextMap["W302"] = "TightPackingされたSpriteAtlasに登録されていますがUseSpriteMeshがOFFです";
+        }
+
         protected override IEnumerator Execute()
         {
             yield return CollectSpriteAtlas();
@@ -35,10 +43,7 @@ namespace BX.TextureChecker
 
         protected override void CheckComponent(GameObject gameObject)
         {
-            if (gameObject.TryGetComponent(out Image image))
-            {
-                CheckImage(image);
-            }
+            if (gameObject.TryGetComponent(out Image image)) { CheckImage(image); }
         }
 
         private void CheckImage(Image image)
@@ -46,7 +51,7 @@ namespace BX.TextureChecker
             var sprite = image.sprite;
             if (sprite == null)
             {
-                AddInformationError(image.gameObject, "ImageにSpriteが設定されていません");
+                AddInformationError(image.gameObject, "E301");
                 return;
             }
 
@@ -56,10 +61,7 @@ namespace BX.TextureChecker
             //Debug.Log($"[{image.name}]:sprite=[{image.sprite.name}] spriteSize={spriteSize}, rectSize={rectSize}");
 
             if ((image.type == Image.Type.Simple || image.type == Image.Type.Filled) &&
-                spriteSize != rectSize)
-            {
-                AddInformationWarning(image.gameObject, "RectサイズがSpriteサイズと一致しません");
-            }
+                spriteSize != rectSize) { AddInformationWarning(image.gameObject, "W301"); }
 
             if (image.type == Image.Type.Simple && !image.useSpriteMesh)
             {
@@ -67,12 +69,7 @@ namespace BX.TextureChecker
                 string guid = AssetDatabase.AssetPathToGUID(path);
                 if (AtlasedTextureMap.TryGetValue(guid, out bool enableTightPacking))
                 {
-                    if (enableTightPacking)
-                    {
-                        AddInformationWarning(
-                            image.gameObject,
-                            "TightPackingされたSpriteAtlasに登録されていますがUseSpriteMeshがOFFです");
-                    }
+                    if (enableTightPacking) { AddInformationWarning(image.gameObject, "W302"); }
                 }
             }
         }
