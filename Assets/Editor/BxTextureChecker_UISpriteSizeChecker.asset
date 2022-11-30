@@ -14,3 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_targetFolder: {fileID: 0}
   m_ignoreAssetObjectList: []
+  m_ignoreAssetList:
+  - 5f96f786fc4016e429cf79a3bd8dde79

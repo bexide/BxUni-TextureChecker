@@ -25,12 +25,15 @@ namespace BX.TextureChecker
         }
 
         // GUI表示内部情報
-        protected GUIStyle  m_logStyleOdd;
-        protected GUIStyle  m_logStyleEven;
-        protected GUIStyle  m_logStyleSelected;
-        protected Texture2D m_errorIconSmall;
-        protected Texture2D m_warningIconSmall;
-        protected Texture2D m_infoIconSmall;
+        //protected GUIStyle   m_logStyleOdd;
+        //protected GUIStyle   m_logStyleEven;
+        //protected GUIStyle   m_logStyleSelected;
+        protected Texture2D  m_errorIconSmall;
+        protected Texture2D  m_warningIconSmall;
+        protected Texture2D  m_infoIconSmall;
+        protected GUIContent m_errorIconContent;
+        protected GUIContent m_warningIconContent;
+        protected GUIContent m_infoIconContent;
 
         MultiColumnHeader               m_columnHeader;
         MultiColumnHeaderState.Column[] m_columns;
@@ -49,6 +52,9 @@ namespace BX.TextureChecker
         /// <summary>アトラスに登録されているテクスチャ一覧</summary>
         protected Dictionary<string, bool> AtlasedTextureMap { get; set; }
 
+        /// <summary>
+        /// 検査結果のエントリ
+        /// </summary>
         protected class InformationEntry
         {
             public InformationType Type          { get; }
@@ -90,21 +96,50 @@ namespace BX.TextureChecker
             }
         }
 
-        protected GUID CurrentAsset { get; set; }
-
+        /// <summary>
+        /// 検査結果
+        /// </summary>
         protected List<InformationEntry> InformationList { get; }
             = new List<InformationEntry>();
 
-        protected bool IsCompleted    { get; set; }
-        protected bool HasInformation => InformationList.Count > 0;
-
+        /// <summary>
+        /// 表示用（ソート済み）の検査結果
+        /// </summary>
         protected List<InformationEntry> DisplayList { get; } = new List<InformationEntry>();
+
+        /// <summary>
+        /// アセットの無視・表示折りたたみ情報
+        /// </summary>
+        protected class AssetEntry
+        {
+            public GUID  Guid      { get; }
+            public bool  Ignore    { get; set; }
+            public bool? NewIgnore { get; set; }
+            public bool  FoldOut   { get; set; }
+
+            public AssetEntry(GUID guid, bool ignore)
+            {
+                Guid    = guid;
+                Ignore  = ignore;
+                FoldOut = true;
+            }
+        }
+
+        protected Dictionary<GUID, AssetEntry> AssetStatusMap { get; }
+            = new Dictionary<GUID, AssetEntry>();
 
         protected void ClearInformation()
         {
             InformationList.Clear();
             DisplayList.Clear();
+            AssetStatusMap.Clear();
         }
+
+        // 検査のステータス
+        protected GUID CurrentAsset { get; set; }
+
+        protected bool IsCompleted    { get; set; }
+        protected bool HasInformation => InformationList.Count > 0;
 
         /// <summary>
         /// 情報エントリを追加
@@ -121,17 +156,25 @@ namespace BX.TextureChecker
             InformationType type,
             string          message)
         {
-            bool ignore = Settings.IgnoreAssetObjectSet.Contains(
+            bool ignoreObject = Settings.IgnoreAssetObjectSet.Contains(
                 new AssetObject(assetPath, objectPath, hierarchyPath));
 
-            InformationList.Add(
-                new InformationEntry(
-                    type,
-                    assetPath,
-                    objectPath,
-                    hierarchyPath,
-                    message,
-                    ignore));
+            var entry = new InformationEntry(
+                type,
+                assetPath,
+                objectPath,
+                hierarchyPath,
+                message,
+                ignoreObject);
+
+            InformationList.Add(entry);
+
+            var guid = entry.AssetGuid;
+            if (!AssetStatusMap.ContainsKey(guid))
+            {
+                bool ignoreAsset = Settings.IgnoreAssetSet.Contains(guid);
+                AssetStatusMap.Add(guid, new AssetEntry(guid, ignoreAsset));
+            }
         }
 
         protected void AddInformationLog(string objectPath, string message)
@@ -199,7 +242,7 @@ namespace BX.TextureChecker
         {
             LoadSettings(checkerId);
             InitializeIcons();
-            InitializeLogStyle();
+            //InitializeLogStyle();
             InitializeMultiColumnHeader();
         }
 
@@ -241,34 +284,27 @@ namespace BX.TextureChecker
             {
                 new MultiColumnHeaderState.Column()
                 {
-                    width      = 16,
+                    width      = 20f,
                     autoResize = false,
                 },
                 new MultiColumnHeaderState.Column()
                 {
-                    headerContent       = new GUIContent("Asset Path"),
-                    width               = 200,
-                    autoResize          = true,
-                    headerTextAlignment = TextAlignment.Left
-                },
-                new MultiColumnHeaderState.Column()
-                {
-                    headerContent       = new GUIContent("Object"),
-                    width               = 100,
+                    headerContent       = new GUIContent("Asset"),
+                    width               = 100f,
                     autoResize          = true,
                     headerTextAlignment = TextAlignment.Left
                 },
                 new MultiColumnHeaderState.Column()
                 {
                     headerContent       = new GUIContent("Ignore"),
-                    width               = 16,
+                    width               = 16f,
                     autoResize          = false,
                     headerTextAlignment = TextAlignment.Center
                 },
                 new MultiColumnHeaderState.Column()
                 {
                     headerContent       = new GUIContent("Information"),
-                    width               = 200,
+                    width               = 100f,
                     autoResize          = true,
                     headerTextAlignment = TextAlignment.Left
                 },
@@ -288,6 +324,7 @@ namespace BX.TextureChecker
             UpdateDisplayList();
         }
 
+#if false
         /// <summary>
         /// スタイル初期化
         /// </summary>
@@ -302,28 +339,22 @@ namespace BX.TextureChecker
             if (EditorGUIUtility.isProSkin)
             {
                 logStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
-                logBgOdd = EditorGUIUtility.Load(
-                    "builtin skins/darkskin/images/cn entrybackodd.png") as Texture2D;
-                logBgEven
-                    = EditorGUIUtility.Load(
-                            "builtin skins/darkskin/images/cnentrybackeven.png") as
-                        Texture2D;
-                logBgSelected
-                    = EditorGUIUtility.Load("builtin skins/darkskin/images/menuitemhover.png")
-                        as Texture2D;
+                logBgOdd = EditorGUIUtility
+                    .Load("builtin skins/darkskin/images/cnentrybackodd.png") as Texture2D;
+                logBgEven = EditorGUIUtility
+                    .Load("builtin skins/darkskin/images/cnentrybackeven.png") as Texture2D;
+                logBgSelected = EditorGUIUtility
+                    .Load("builtin skins/darkskin/images/menuitemhover.png") as Texture2D;
             }
             else
             {
                 logStyle.normal.textColor = new Color(0.1f, 0.1f, 0.1f);
-                logBgOdd = EditorGUIUtility.Load(
-                    "builtin skins/lightskin/images/cn entrybackodd.png") as Texture2D;
-                logBgEven
-                    = EditorGUIUtility.Load(
-                            "builtin skins/lightskin/images/cnentrybackeven.png") as
-                        Texture2D;
-                logBgSelected
-                    = EditorGUIUtility.Load("builtin skins/lightskin/images/menuitemhover.png")
-                        as Texture2D;
+                logBgOdd = EditorGUIUtility
+                    .Load("builtin skins/lightskin/images/cnentrybackodd.png") as Texture2D;
+                logBgEven = EditorGUIUtility
+                    .Load("builtin skins/lightskin/images/cnentrybackeven.png") as Texture2D;
+                logBgSelected = EditorGUIUtility
+                    .Load("builtin skins/lightskin/images/menuitemhover.png") as Texture2D;
             }
 
             m_logStyleOdd                        = new GUIStyle(logStyle);
@@ -333,6 +364,7 @@ namespace BX.TextureChecker
             m_logStyleEven.normal.background     = logBgEven;
             m_logStyleSelected.normal.background = logBgSelected;
         }
+#endif
 
         /// <summary>
         /// アイコンリソース読み込み
@@ -345,6 +377,10 @@ namespace BX.TextureChecker
                 = EditorGUIUtility.Load("icons/console.warnicon.sml.png") as Texture2D;
             m_infoIconSmall
                 = EditorGUIUtility.Load("icons/console.infoicon.sml.png") as Texture2D;
+
+            m_errorIconContent   = new GUIContent(m_errorIconSmall);
+            m_warningIconContent = new GUIContent(m_warningIconSmall);
+            m_infoIconContent    = new GUIContent(m_infoIconSmall);
         }
 
         /// <summary>
@@ -354,11 +390,6 @@ namespace BX.TextureChecker
         {
             // 情報ウィンドウ
             if (!IsCompleted) { return; }
-
-            m_informationScrollPosition = EditorGUILayout.BeginScrollView(
-                m_informationScrollPosition,
-                false,
-                false);
 
             // カラムヘッダ
             var headerRect = EditorGUILayout.GetControlRect();
@@ -390,12 +421,12 @@ namespace BX.TextureChecker
 
             if (Event.current.type == EventType.Repaint)
             {
-                m_cachedPosition1 = GUILayoutUtility.GetLastRect().xMax;
+                m_cachedPosition1 = GUILayoutUtility.GetLastRect().xMax + 2f;
             }
-            float ignorePosition = Enumerable.Range(0, 3)
+            float ignorePosition = Enumerable.Range(0, 2)
                 .Select(i => m_columnHeader.GetColumnRect(i).width)
                 .Sum();
-            GUILayoutUtility.GetRect(ignorePosition - m_cachedPosition1, 1);
+            GUILayoutUtility.GetRect(ignorePosition - m_cachedPosition1, 1f);
 
             bool showIgnore = EditorGUILayout.ToggleLeft("無視を表示", m_showIgnoreAssets);
             if (showIgnore != m_showIgnoreAssets)
@@ -408,6 +439,14 @@ namespace BX.TextureChecker
 
             EditorGUILayout.EndHorizontal();
 
+            GUID lastGuid    = default;
+            bool lastFoldOut = true;
+
+            m_informationScrollPosition = EditorGUILayout.BeginScrollView(
+                m_informationScrollPosition,
+                false,
+                false);
+
             //bool even = false;
             for (int i = m_viewIndex;
                  i < Math.Min(m_viewIndex + k_pageViews, DisplayList.Count);
@@ -415,52 +454,112 @@ namespace BX.TextureChecker
             {
                 var info = DisplayList[i];
 
-                var icon =
-                    info.Type == InformationType.Info    ? m_infoIconSmall :
-                    info.Type == InformationType.Warning ? m_warningIconSmall :
-                                                           m_errorIconSmall;
-
                 //var logStyle = even ? m_logStyleOdd : m_logStyleEven;
                 //even = !even;
 
-                EditorGUILayout.BeginHorizontal();
-
-                EditorGUILayout.LabelField(
-                    new GUIContent(icon),
-                    GUILayout.Width(m_columnHeader.GetColumnRect(0).width - 2));
-
-                string assetPath = AssetDatabase.GUIDToAssetPath(info.AssetGuid);
-                if (GUILayout.Button(
-                        assetPath,
-                        EditorStyles.objectField,
-                        GUILayout.Width(m_columnHeader.GetColumnRect(1).width - 2)))
+                if (info.AssetGuid != lastGuid)
                 {
-                    var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
-                    EditorGUIUtility.PingObject(obj);
+                    lastGuid = info.AssetGuid;
+                    var assetStatus = AssetStatusMap[lastGuid];
+                    lastFoldOut = assetStatus.FoldOut;
+                    EditorGUILayout.BeginHorizontal();
+
+                    GUILayoutUtility.GetRect(m_columnHeader.GetColumnRect(0).width, 22f);
+                    var foldRect = GUILayoutUtility.GetLastRect();
+
+                    // アセット FoldOut
+                    if (Event.current.type == EventType.Repaint)
+                    {
+                        EditorStyles.foldout.Draw(
+                            foldRect,
+                            false,
+                            true,
+                            lastFoldOut,
+                            false);
+                    }
+                    else if (Event.current.type == EventType.MouseDown &&
+                             foldRect.Contains(Event.current.mousePosition))
+                    {
+                        assetStatus.FoldOut = lastFoldOut = !lastFoldOut;
+                        Event.current.Use();
+                    }
+
+                    // Asset Field
+                    string assetPath = AssetDatabase.GUIDToAssetPath(info.AssetGuid);
+                    if (GUILayout.Button(
+                            assetPath,
+                            EditorStyles.objectField,
+                            GUILayout.Width(m_columnHeader.GetColumnRect(1).width - 2f)))
+                    {
+                        var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
+                        EditorGUIUtility.PingObject(obj);
+                    }
+
+                    // Ignore Toggle Field
+                    bool currentIgnore = assetStatus.NewIgnore ?? assetStatus.Ignore;
+                    bool newIgnore = EditorGUILayout.Toggle(
+                        currentIgnore,
+                        GUILayout.Width(m_columnHeader.GetColumnRect(3).width - 2f));
+                    if (newIgnore != currentIgnore) { assetStatus.NewIgnore = newIgnore; }
+
+                    GUILayout.FlexibleSpace();
+                    EditorGUILayout.EndHorizontal();
                 }
 
-                if (GUILayout.Button(
-                        info.GetObjectString(),
-                        EditorStyles.objectField,
-                        GUILayout.Width(m_columnHeader.GetColumnRect(2).width - 2)))
+                if (lastFoldOut)
                 {
-                    int instanceId = info.GetObjectInstanceId();
-                    Selection.activeInstanceID = instanceId;
-                    EditorGUIUtility.PingObject(instanceId);
+                    EditorGUILayout.BeginHorizontal();
+
+                    // Information Type Icon
+                    var iconContent = info.Type switch
+                    {
+                        InformationType.Info    => m_infoIconContent,
+                        InformationType.Warning => m_warningIconContent,
+                        _                       => m_errorIconContent
+                    };
+                    EditorGUILayout.LabelField(
+                        iconContent,
+                        GUILayout.Width(m_columnHeader.GetColumnRect(0).width - 2f));
+#if false
+                    // Asset Field
+                    string assetPath = AssetDatabase.GUIDToAssetPath(info.AssetGuid);
+                    if (GUILayout.Button(
+                            assetPath,
+                            EditorStyles.objectField,
+                            GUILayout.Width(m_columnHeader.GetColumnRect(1).width - 2f)))
+                    {
+                        var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
+                        EditorGUIUtility.PingObject(obj);
+                    }
+#endif
+                    // Object Field
+                    if (GUILayout.Button(
+                            info.GetObjectString(),
+                            EditorStyles.objectField,
+                            GUILayout.Width(m_columnHeader.GetColumnRect(1).width - 2f)))
+                    {
+                        int instanceId = info.GetObjectInstanceId();
+                        Selection.activeInstanceID = instanceId;
+                        EditorGUIUtility.PingObject(instanceId);
+                    }
+
+                    // Ignore Toggle Field
+                    bool currentIgnore = info.NewIgnore ?? info.Ignore;
+                    bool newIgnore = EditorGUILayout.Toggle(
+                        currentIgnore,
+                        GUILayout.Width(m_columnHeader.GetColumnRect(2).width - 2f));
+                    if (newIgnore != currentIgnore) { info.NewIgnore = newIgnore; }
+
+                    // Information Text Field
+                    EditorGUILayout.LabelField(
+                        info.Text,
+                        GUILayout.Width(m_columnHeader.GetColumnRect(3).width - 2f));
+
+                    EditorGUILayout.EndHorizontal();
                 }
-
-                bool currentIgnore = info.NewIgnore ?? info.Ignore;
-                bool newIgnore = EditorGUILayout.Toggle(
-                    currentIgnore,
-                    GUILayout.Width(m_columnHeader.GetColumnRect(3).width - 2));
-                if (newIgnore != currentIgnore) { info.NewIgnore = newIgnore; }
-
-                EditorGUILayout.LabelField(
-                    info.Text,
-                    GUILayout.Width(m_columnHeader.GetColumnRect(4).width - 2));
-
-                EditorGUILayout.EndHorizontal();
             }
+
+            EditorGUILayout.EndScrollView();
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(pageContent, GUILayout.Width(pageWidth));
@@ -476,8 +575,6 @@ namespace BX.TextureChecker
             if (GUILayout.Button("無視フラグクリア", GUILayout.MaxWidth(200))) { ClearIgnoreFlags(); }
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.EndScrollView();
         }
 
         /// <summary>
@@ -499,7 +596,8 @@ namespace BX.TextureChecker
             }
             else
             {
-                foreach (var info in sortedInformation.Where(info => !info.Ignore))
+                foreach (var info in sortedInformation.Where(
+                             info => !info.Ignore && !AssetStatusMap[info.AssetGuid].Ignore))
                 {
                     DisplayList.Add(info);
                 }
@@ -562,6 +660,17 @@ namespace BX.TextureChecker
                     info.NewIgnore = null;
                 }
             }
+
+            foreach (var status in AssetStatusMap.Values)
+            {
+                if (status.NewIgnore is { } ignore)
+                {
+                    status.Ignore = ignore;
+                    Settings.SetIgnoreAsset(status.Guid, ignore);
+                    status.NewIgnore = null;
+                }
+            }
+
             EditorUtility.SetDirty(Settings);
             UpdateDisplayList();
         }
@@ -571,12 +680,19 @@ namespace BX.TextureChecker
         /// </summary>
         private void ClearIgnoreFlags()
         {
-            Settings.ClearIgnoreAssetObjectSet();
             foreach (var info in InformationList)
             {
                 info.Ignore    = false;
                 info.NewIgnore = null;
             }
+
+            foreach (var guid in AssetStatusMap.Keys)
+            {
+                AssetStatusMap[guid].Ignore    = false;
+                AssetStatusMap[guid].NewIgnore = null;
+            }
+
+            Settings.ClearIgnoreSet();
             EditorUtility.SetDirty(Settings);
             UpdateDisplayList();
         }
