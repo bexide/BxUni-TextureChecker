@@ -177,11 +177,14 @@ namespace BX.TextureChecker
 
             InformationList.Add(entry);
 
-            var guid = entry.AssetGuid;
-            if (!AssetStatusMap.ContainsKey(guid))
+            if (hierarchyPath != null || !string.IsNullOrEmpty(objectPath))
             {
-                bool ignoreAsset = Settings.IgnoreAssetSet.Contains(guid);
-                AssetStatusMap.Add(guid, new AssetEntry(guid, ignoreAsset));
+                var guid = entry.AssetGuid;
+                if (!AssetStatusMap.ContainsKey(guid))
+                {
+                    bool ignoreAsset = Settings.IgnoreAssetSet.Contains(guid);
+                    AssetStatusMap.Add(guid, new AssetEntry(guid, ignoreAsset));
+                }
             }
         }
 
@@ -472,7 +475,13 @@ namespace BX.TextureChecker
                 //var logStyle = even ? m_logStyleOdd : m_logStyleEven;
                 //even = !even;
 
-                if (info.AssetGuid != lastGuid)
+                if (info.HierarchyPath == null && string.IsNullOrEmpty(info.ObjectPath))
+                {
+                    // アセットのみ
+                    lastGuid    = default;
+                    lastFoldOut = true;
+                }
+                else if (info.AssetGuid != lastGuid)
                 {
                     lastGuid = info.AssetGuid;
                     var assetStatus = AssetStatusMap[lastGuid];
@@ -535,27 +544,33 @@ namespace BX.TextureChecker
                     EditorGUILayout.LabelField(
                         iconContent,
                         GUILayout.Width(m_columnHeader.GetColumnRect(0).width - 2f));
-#if false
+
                     // Asset Field
-                    string assetPath = AssetDatabase.GUIDToAssetPath(info.AssetGuid);
-                    if (GUILayout.Button(
-                            assetPath,
-                            EditorStyles.objectField,
-                            GUILayout.Width(m_columnHeader.GetColumnRect(1).width - 2f)))
+                    if (info.HierarchyPath == null && string.IsNullOrEmpty(info.ObjectPath))
                     {
-                        var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
-                        EditorGUIUtility.PingObject(obj);
+                        string assetPath = AssetDatabase.GUIDToAssetPath(info.AssetGuid);
+                        if (GUILayout.Button(
+                                assetPath,
+                                EditorStyles.objectField,
+                                GUILayout.Width(m_columnHeader.GetColumnRect(1).width - 2f)))
+                        {
+                            var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(
+                                assetPath);
+                            EditorGUIUtility.PingObject(obj);
+                        }
                     }
-#endif
-                    // Object Field
-                    if (GUILayout.Button(
-                            info.GetObjectString(),
-                            EditorStyles.objectField,
-                            GUILayout.Width(m_columnHeader.GetColumnRect(1).width - 2f)))
+                    else
                     {
-                        int instanceId = info.GetObjectInstanceId();
-                        Selection.activeInstanceID = instanceId;
-                        EditorGUIUtility.PingObject(instanceId);
+                        // Object Field
+                        if (GUILayout.Button(
+                                info.GetObjectString(),
+                                EditorStyles.objectField,
+                                GUILayout.Width(m_columnHeader.GetColumnRect(1).width - 2f)))
+                        {
+                            int instanceId = info.GetObjectInstanceId();
+                            Selection.activeInstanceID = instanceId;
+                            EditorGUIUtility.PingObject(instanceId);
+                        }
                     }
 
                     // Ignore Toggle Field
@@ -607,12 +622,17 @@ namespace BX.TextureChecker
             var sortedInformation = GetSortedInformationList();
             if (m_showIgnoreAssets)
             {
+                // 無視対象も表示
                 foreach (var info in sortedInformation) { DisplayList.Add(info); }
             }
             else
             {
+                // 無視対象をフィルタ
                 foreach (var info in sortedInformation.Where(
-                             info => !info.Ignore && !AssetStatusMap[info.AssetGuid].Ignore))
+                             info => !info.Ignore &&
+                                     ((info.HierarchyPath == null &&
+                                       string.IsNullOrEmpty(info.ObjectPath)) ||
+                                      !AssetStatusMap[info.AssetGuid].Ignore)))
                 {
                     DisplayList.Add(info);
                 }
