@@ -22,10 +22,12 @@ namespace BX.TextureChecker
         // GUI表示内部情報
         protected enum TargetMode
         {
+            All,
             Prefab,
             Scene,
             Hierarchy,
         }
+
         protected int      m_mode;
         protected string[] k_modeTexts = Enum.GetNames(typeof(TargetMode));
 
@@ -62,6 +64,7 @@ namespace BX.TextureChecker
                 k_modeTexts,
                 k_modeTexts.Length,
                 new GUIStyle(EditorStyles.radioButton));
+            GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
             if (!IsCompleted)
@@ -90,11 +93,24 @@ namespace BX.TextureChecker
         {
             ClearInformation();
         }
-        
+
         protected virtual IEnumerator Execute()
         {
+            if (IsSceneDirty())
+            {
+                if (EditorUtility.DisplayDialog("警告", "シーンに保存されていない変更があります", "中止", "無視"))
+                {
+                    yield break;
+                }
+            }
+
             switch ((TargetMode)m_mode)
             {
+            case TargetMode.All:
+                yield return CheckPrefabs();
+                yield return CheckScenes();
+                break;
+
             case TargetMode.Prefab:
                 yield return CheckPrefabs();
                 break;
@@ -133,10 +149,16 @@ namespace BX.TextureChecker
                     continue;
                 }
 
-                CurrentAsset = new GUID(guid);
                 var prefabAsset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-                AssetDatabase.OpenAsset(prefabAsset);
-                CheckHierarchy();
+                if (AssetDatabase.OpenAsset(prefabAsset))
+                {
+                    var stage = PrefabStageUtility.GetCurrentPrefabStage();
+                    if (stage.assetPath == path)
+                    {
+                        CurrentAsset = new GUID(guid);
+                        CheckHierarchy();
+                    }
+                }
 
                 // プログレスバー
                 if (EditorUtility.DisplayCancelableProgressBar(
@@ -195,16 +217,23 @@ namespace BX.TextureChecker
             EditorUtility.ClearProgressBar();
         }
 
+        private bool IsSceneDirty()
+        {
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+            {
+                var scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+                if (scene.isDirty) { return true; }
+            }
+            return false;
+        }
+
         /// <summary>
         /// HierarchyのGameObjectをチェック
         /// </summary>
         private void CheckHierarchy()
         {
             var gameObjects = GetGameObjectsInHierarchy();
-            foreach (var go in gameObjects)
-            {
-                CheckComponent(go);
-            }
+            foreach (var go in gameObjects) { CheckComponent(go); }
         }
 
         /// <summary>
@@ -218,7 +247,7 @@ namespace BX.TextureChecker
                 return Resources.FindObjectsOfTypeAll(typeof(GameObject))
                     .Where(obj => AssetDatabase.GetAssetOrScenePath(obj).EndsWith(".unity"))
                     .Select(obj => obj as GameObject)
-                    .ToList(); 
+                    .ToList();
             }
             else
             {

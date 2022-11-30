@@ -19,7 +19,7 @@ namespace BX.TextureChecker
         {
             var window =
                 GetWindow<UIImageSpriteChecker>(
-                    utility: true,
+                    utility: false,
                     title: "UI Sprite Size Checker",
                     focus: true);
             window.Initialize("UISpriteSizeChecker");

@@ -129,7 +129,7 @@ namespace BX.TextureChecker
             {
                 Guid    = guid;
                 Ignore  = ignore;
-                FoldOut = true;
+                FoldOut = false;
             }
         }
 

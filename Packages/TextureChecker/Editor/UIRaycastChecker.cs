@@ -20,7 +20,7 @@ namespace BX.TextureChecker
         {
             var window =
                 GetWindow<UIRaycastChecker>(
-                    utility: true,
+                    utility: false,
                     title: "UI Raycast Status Checker",
                     focus: true);
             window.Initialize("UIRaycastStatusChecker");

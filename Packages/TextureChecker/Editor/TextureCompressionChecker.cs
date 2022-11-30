@@ -40,7 +40,7 @@ namespace BX.TextureChecker
         {
             var window =
                 GetWindow<TextureCompressionChecker>(
-                    utility: true,
+                    utility: false,
                     title: "Texture Compression Checker",
                     focus: true);
             window.Initialize("TextureCompressionChecker");
