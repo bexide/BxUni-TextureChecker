@@ -28,7 +28,6 @@ SpriteAtlas:
       allowAlphaSplitting: 0
       enableRotation: 1
       enableTightPacking: 0
-      enableAlphaDilation: 0
     secondaryTextureSettings: {}
     variantMultiplier: 1
     packables:
@@ -39,47 +38,65 @@ SpriteAtlas:
     cachedData: {fileID: 0}
   m_MasterAtlas: {fileID: 0}
   m_PackedSprites:
-  - {fileID: 21300000, guid: d0e4c740627a41948b4730bdde80159f, type: 3}
-  - {fileID: 21300000, guid: 1fd22cd0da38c8c4eb307a0f69062d87, type: 3}
-  - {fileID: 21300000, guid: dafeb3f0fbf3e75449ca68e1d6195d84, type: 3}
-  - {fileID: 21300000, guid: 5e340ea3209c3a7499a3a70feacc86dd, type: 3}
-  - {fileID: 21300000, guid: deb28cb372e1ee54fad618f6df43247f, type: 3}
-  - {fileID: 21300000, guid: 827643247c5396045ab168f4d32a7e92, type: 3}
-  - {fileID: 21300000, guid: ab583367fd82145489e90fc5eef1dde2, type: 3}
-  - {fileID: 21300000, guid: c4ff81b7bfabff142bca997c0b82a2d7, type: 3}
-  - {fileID: 21300000, guid: b2091e8997f03334b9982307c497cc96, type: 3}
-  - {fileID: 21300000, guid: 437a9fa932ecb444993f508d7a2a4a83, type: 3}
-  - {fileID: 21300000, guid: 1d53ccea30d239443a353dfc56787f7a, type: 3}
-  - {fileID: 21300000, guid: 06c619fa15d6cb34cba253e671968049, type: 3}
-  - {fileID: 21300000, guid: 40cae34ba44b6bd4ea8bd768a859ce6c, type: 3}
-  - {fileID: 21300000, guid: 387dc9cb29c56b146a2fadccaf58cef4, type: 3}
-  - {fileID: 21300000, guid: a887e55c507f0a24eae8c11437b3251e, type: 3}
-  - {fileID: 21300000, guid: 6c59765e9ab73924a80c334a72fa4ae4, type: 3}
-  - {fileID: 21300000, guid: b08b8c8e61ac8fb42bec46925dec2c2d, type: 3}
-  - {fileID: 21300000, guid: d18b90fe4f8d65849ae22475dd6a1528, type: 3}
-  - {fileID: 21300000, guid: 9701362fbe601df4fbe3f0a4c897797c, type: 3}
-  - {fileID: 21300000, guid: 99683c3fe17b51e459ea305d3727abc7, type: 3}
+  - {fileID: 21300000, guid: da83e2300df13ab43b9e5d5cf1d24714, type: 3}
+  - {fileID: 21300000, guid: a1dc04d0aaed2164dbdf329a966935ba, type: 3}
+  - {fileID: 21300000, guid: 162eb1d19b1017d469c267db17d000ed, type: 3}
+  - {fileID: 21300000, guid: 0b6ed6222b02f1f45bb66993675c5c19, type: 3}
+  - {fileID: 21300000, guid: d16da572c4075c046be390b0269d5f8e, type: 3}
+  - {fileID: 21300000, guid: 303fa713d01a3164bafca07776fa7817, type: 3}
+  - {fileID: 21300000, guid: e0819514b79d6a946b6a5ffd530c1bc3, type: 3}
+  - {fileID: 21300000, guid: c2e1025453bb8284b9baa0e8678fae4d, type: 3}
+  - {fileID: 21300000, guid: 24baf60526c680e4f9eec5186e629bb4, type: 3}
+  - {fileID: 21300000, guid: 09e7c4065ec2e7b478dcd9d3b945404c, type: 3}
+  - {fileID: 21300000, guid: e9f4c5863a943354bb0278c2d0c36f18, type: 3}
+  - {fileID: 21300000, guid: 79213a67c7fd87841933c4a2c6a0b6fa, type: 3}
+  - {fileID: 21300000, guid: 5f34b6770bffe424dad125213b05df3b, type: 3}
+  - {fileID: 21300000, guid: 8a55c71806ed19a4a9989a1870d8b8e4, type: 3}
+  - {fileID: 21300000, guid: 52334c099a5ccfa41bd69f6d1649e202, type: 3}
+  - {fileID: 21300000, guid: add6279900f0e6e4ca72bf665fdc8a2c, type: 3}
+  - {fileID: 21300000, guid: ae157c9997f51f3438cba1cd1016c136, type: 3}
+  - {fileID: 21300000, guid: 18baafb90ca6a1a4298eb8a0b6b14e26, type: 3}
+  - {fileID: 21300000, guid: c8f0e3c9fb1e60544897b76281c11645, type: 3}
+  - {fileID: 21300000, guid: 52d85f2bc1a499745a73577d66960741, type: 3}
+  - {fileID: 21300000, guid: e2f0b0cbaffc1514d93d5bf47f2eec51, type: 3}
+  - {fileID: 21300000, guid: fd9cb74cefbf78141a1c86f41dc3be48, type: 3}
+  - {fileID: 21300000, guid: 4a0df98c8eb10474e90b04edfb2713bb, type: 3}
+  - {fileID: 21300000, guid: 196cf4cdd4435724fb223e57322abb57, type: 3}
+  - {fileID: 21300000, guid: 29f3be3fdcb830040940c415b1e67eb2, type: 3}
+  - {fileID: 21300000, guid: ff8e488fbbb17cb429b1757d8342d012, type: 3}
+  - {fileID: 21300000, guid: 819ec79f2e2de69448e8122863f8db40, type: 3}
+  - {fileID: 21300000, guid: 647d0d9fae0b6b54c9a50da2c895bb17, type: 3}
+  - {fileID: 21300000, guid: 2b09bdbf96f87b848a671cf1812b75a2, type: 3}
   m_PackedSpriteNamesToIndex:
-  - heart
-  - clenchteeth
-  - cute
-  - kiss
-  - clenchteeth2
-  - angry
-  - crazy
-  - evil
-  - happy
-  - expressionless
-  - angryscream
-  - injured
-  - disappoint
-  - blush
-  - bigsmile
-  - kissyface
-  - cry
-  - cool
-  - drool
-  - disappoint2
+  - 1F608
+  - 1F604
+  - 1F600
+  - 1F643
+  - 1F644
+  - 1F637
+  - 1F614
+  - 1F615
+  - 1F641
+  - 1F610
+  - 1F606
+  - 1F633
+  - 1F634
+  - 1F632
+  - 1F609
+  - 1F640
+  - 1F607
+  - 1F642
+  - 1F605
+  - 1F639
+  - 1F602
+  - 1F601
+  - 1F638
+  - 1F612
+  - 1F603
+  - 1F613
+  - 1F636
+  - 1F635
+  - 1F611
   m_RenderDataMap: {}
   m_Tag: Emojis_All
   m_IsVariant: 0
