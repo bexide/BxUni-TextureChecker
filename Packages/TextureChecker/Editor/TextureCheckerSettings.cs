@@ -56,6 +56,7 @@ namespace BX.TextureChecker
 
         public void ClearIgnoreSet()
         {
+            m_ignoreAssetSet.Clear();
             m_ignoreAssetObjectSet.Clear();
         }
 

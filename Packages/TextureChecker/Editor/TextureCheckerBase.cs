@@ -672,8 +672,7 @@ namespace BX.TextureChecker
                 return columnIndex switch
                 {
                     1 => info => AssetDatabase.GUIDToAssetPath(info.AssetGuid),
-                    2 => info => info.GetObjectString(),
-                    4 => info => info.Code,
+                    3 => info => info.Code,
                     _ => info => string.Empty
                 };
             }

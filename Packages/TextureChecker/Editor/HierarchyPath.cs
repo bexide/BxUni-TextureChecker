@@ -39,6 +39,8 @@ namespace BX.TextureChecker
                 return NodeName == transform.name &&
                        SiblingIndex == transform.GetSiblingIndex();
             }
+
+            public override string ToString() => m_nodeName;
             
             #region Equality
 
@@ -106,8 +108,9 @@ namespace BX.TextureChecker
                 }
                 else
                 {
-                    currentNode = GetChildNode(currentNode, entry);
-                    Debug.Assert(currentNode != null);
+                    var newNode = GetChildNode(currentNode, entry);
+                    Debug.Assert(newNode != null, $"node [{entry}] not found in [{currentNode}]");
+                    currentNode = newNode;
                 }
             }
 
@@ -116,27 +119,28 @@ namespace BX.TextureChecker
             return currentNode.gameObject;
         }
 
+        /// <summary>
+        /// Hierarchyのルートノード取得
+        /// </summary>
         private GameObject GetRootNode(NodeEntry entry)
         {
-            // ルートノード取得
             var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
-            if (prefabStage == null)
-            {
-                // Sceneモード
-                for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
-                {
-                    var scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
-                    foreach (var rootGameObject in scene.GetRootGameObjects())
-                    {
-                        if (entry.IsMatch(rootGameObject.transform)) { return rootGameObject; }
-                    }
-                }
-            }
-            else
+            if (prefabStage != null)
             {
                 // Prefabモード
                 return prefabStage.prefabContentsRoot;
             }
+
+            // Sceneモード
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+            {
+                var scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+                foreach (var rootGameObject in scene.GetRootGameObjects())
+                {
+                    if (entry.IsMatch(rootGameObject.transform)) { return rootGameObject; }
+                }
+            }
+
             return null;
         }
 
@@ -158,6 +162,11 @@ namespace BX.TextureChecker
             var ancestors = new List<NodeEntry>();
             for (var trans = gameObject.transform; trans != null; trans = trans.parent)
             {
+                if (trans.hideFlags.HasFlag(HideFlags.NotEditable))
+                {
+                    // Prefabモードの疑似ノードを無視
+                    continue;
+                }
                 ancestors.Add(new NodeEntry(trans));
             }
 
@@ -169,7 +178,8 @@ namespace BX.TextureChecker
             if (NodeEntries == null ||
                 NodeEntries.Count <= 0) { return string.Empty; }
             //return NodeEntries[^1].NodeName;
-            return NodeEntries.Last().NodeName;
+            //return NodeEntries.Last().NodeName;
+            return string.Join("/", NodeEntries);
         }
         
         #region Equality
