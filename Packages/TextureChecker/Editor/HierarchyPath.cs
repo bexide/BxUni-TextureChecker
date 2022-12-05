@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEditor.SceneManagement;
 using UnityEditor.Experimental.SceneManagement;
 
-namespace BX.TextureChecker
+namespace BxUni.TextureChecker
 {
     /// <summary>
     /// Hierarchy内のGameObjectの位置を示す情報

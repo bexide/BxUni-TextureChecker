@@ -13,7 +13,7 @@ using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEditor.U2D;
 
-namespace BX.TextureChecker
+namespace BxUni.TextureChecker
 {
     internal abstract class TextureCheckerBase : EditorWindow
     {

@@ -12,7 +12,7 @@ using Unity.EditorCoroutines.Editor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Experimental.SceneManagement;
 
-namespace BX.TextureChecker
+namespace BxUni.TextureChecker
 {
     /// <summary>
     /// コンポーネントの設定をチェックする機能のテンプレート

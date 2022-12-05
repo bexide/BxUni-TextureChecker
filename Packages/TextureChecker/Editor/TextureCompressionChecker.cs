@@ -12,7 +12,7 @@ using UnityEngine;
 using UnityEditor;
 using Unity.EditorCoroutines.Editor;
 
-namespace BX.TextureChecker
+namespace BxUni.TextureChecker
 {
     /// <summary>
     /// テクスチャアセットの圧縮設定をチェックするツール

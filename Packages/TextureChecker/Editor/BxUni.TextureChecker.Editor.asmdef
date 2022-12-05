@@ -1,5 +1,5 @@
 {
-    "name": "BX.TextureChecker.Editor",
+    "name": "BxUni.TextureChecker.Editor",
     "rootNamespace": "",
     "references": [
         "Unity.EditorCoroutines.Editor",

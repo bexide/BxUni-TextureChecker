@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace BX.TextureChecker
+namespace BxUni.TextureChecker
 {
     /// <summary>
     /// 特定のアセットを記録するクラス

@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEditor;
 
-namespace BX.TextureChecker
+namespace BxUni.TextureChecker
 {
     /// <summary>
     /// ImageのRectのサイズがSpriteのサイズと一致しているかを検証する

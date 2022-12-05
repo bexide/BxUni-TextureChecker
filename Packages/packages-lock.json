@@ -106,7 +106,7 @@
         "com.unity.modules.imgui": "1.0.0"
       }
     },
-    "jp.bexide.lib.texturechecker": {
+    "jp.co.bexide.bxuni.texturechecker": {
       "version": "file:TextureChecker",
       "depth": 0,
       "source": "embedded",

@@ -6,7 +6,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEditor;
 
-namespace BX.TextureChecker
+namespace BxUni.TextureChecker
 {
     public static class DebugUtility
     {

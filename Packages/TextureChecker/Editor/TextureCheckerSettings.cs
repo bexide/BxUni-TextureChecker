@@ -6,7 +6,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEditor;
 
-namespace BX.TextureChecker
+namespace BxUni.TextureChecker
 {
     /// <summary>
     /// TextureCheckerの設定を保存するアセット

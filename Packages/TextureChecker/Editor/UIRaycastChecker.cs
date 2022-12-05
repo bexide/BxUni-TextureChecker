@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace BX.TextureChecker
+namespace BxUni.TextureChecker
 {
     /// <summary>
     /// </summary>
