@@ -9,5 +9,3 @@
 ## ライセンス
 
 [LICENSE](Packages/TextureChecker/LICENSE.md)
-
-## お問い合わせ
