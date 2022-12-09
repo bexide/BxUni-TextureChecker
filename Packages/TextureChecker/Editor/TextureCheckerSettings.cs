@@ -60,6 +60,7 @@ namespace BxUni.TextureChecker
             m_ignoreAssetObjectSet.Clear();
         }
 
+        // シリアライズ処理
         #region Serializer
 
         [SerializeField]

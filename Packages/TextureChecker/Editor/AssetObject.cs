@@ -1,4 +1,7 @@
-﻿using System;
+﻿// 2022-11-25 BeXide,Inc.
+// by Y.Hayashi
+
+using System;
 using UnityEditor;
 using UnityEngine;
 
@@ -21,6 +24,7 @@ namespace BxUni.TextureChecker
             m_hierarchyPath = hierarchyPath;
         }
 
+        // 同値判定
         #region Equality
 
         public override int GetHashCode()
@@ -63,6 +67,7 @@ namespace BxUni.TextureChecker
 
         #endregion
 
+        // シリアライズ処理
         #region Serializer
 
         [SerializeField]

@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEditor.SceneManagement;
 using UnityEditor.Experimental.SceneManagement;
 
 namespace BxUni.TextureChecker
@@ -182,6 +181,7 @@ namespace BxUni.TextureChecker
             return string.Join("/", NodeEntries);
         }
         
+        // 同値判定
         #region Equality
 
         public override int GetHashCode()

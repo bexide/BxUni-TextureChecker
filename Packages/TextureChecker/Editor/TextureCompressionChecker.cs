@@ -2,7 +2,6 @@
 // by Y.Hayashi
 // original from bx70beta
 
-using System;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
