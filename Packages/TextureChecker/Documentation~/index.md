@@ -2,6 +2,16 @@
 
 プロジェクトに含まれるテクスチャ設定と関連するUI項目を検査するエディタ拡張
 
+## インストール
+
+### Package Manager からのインストール
+
+* Package Manager → Scoped Registries に以下を登録
+  * URL: https://package.openupm.com
+  * Scope: jp.co.bexide
+* Package Manager → My Registries から以下を選択して Install
+  * BxUni Texture Checker 
+
 ## 使用方法
 
 ### 起動
@@ -116,3 +126,7 @@ UI要素について無駄なRaycastCheckが行われていないか検査しま
 RectTransformにこのオブジェクトのRectTransformが完全に包含されているため個別に処理する意味がありません。
 無駄を省くためにこのオブジェクトのRaycastTargetは外したほうがよいでしょう。
 
+## お問い合わせ
+
+* 不具合のご報告は GitHub の Issues へ
+* その他お問い合わせは mailto:tech-info@bexide.co.jp へ
